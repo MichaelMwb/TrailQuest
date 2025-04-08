@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container py-5 d-flex justify-content-center">
+  <div class="col-md-8">
+    <div class="card shadow-lg p-5 rounded text-center">
+      <h2 class="text-success fw-bold">✅ Purchase Completed!</h2>
+      <hr />
+      <p class="fs-5">Congratulations! Your order has been successfully placed.</p>
+      <p class="fw-bold fs-4">📦 Order Number: <span class="text-primary">#{{ order.user_order_number }}</span></p>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}

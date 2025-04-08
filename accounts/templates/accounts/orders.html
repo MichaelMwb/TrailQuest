@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="p-3 px-5">  <!-- Added padding left and right -->
+    <div class="row mt-3">
+        <div class="col mx-auto mb-3">
+            <!-- Styled Page Title -->
+            <h2 class="fw-bold text-primary">📦 My Orders</h2>
+            <hr />
+
+            {% for order in template_data.orders %}
+                <!-- Centered Order Header -->
+                <div class="card-header bg-primary text-white py-2 text-center">
+                    <h5 class="mb-0 fw-bold">Order #{{ order.user_order_number }}</h5>
+                </div>                
+
+                <!-- Order Body with Improved Spacing -->
+                <div class="card-body text-center pb-3 pt-3 px-4">
+                    <p class="mb-1 fs-5"><b class="text-dark">📅 Date:</b> {{ order.date }}</p>
+                    <p class="mb-2 fs-5"><b class="text-dark">💰 Total:</b> ${{ order.total }}</p>
+                </div>
+
+                    <!-- Styled Table -->
+                    <table class="table table-bordered table-striped text-center mt-2 px-4">
+                        <thead class="table-dark">
+                            <tr>
+                                <th scope="col">Item ID</th>
+                                <th scope="col">Movie</th>
+                                <th scope="col">Price</th>
+                                <th scope="col">Quantity</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order.item_set.all %}
+                                <tr>
+                                    <td class="fw-bold">{{ item.movie.id }}</td>
+                                    <td>
+                                        <a class="link-dark fw-bold text-decoration-none"
+                                           href="{% url 'movies.show' id=item.movie.id %}">
+                                            {{ item.movie.name }}
+                                        </a>
+                                    </td>
+                                    <td class="text-success fw-bold">${{ item.movie.price }}</td>
+                                    <td class="fw-bold">{{ item.quantity }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock content %}
