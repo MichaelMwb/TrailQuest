@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block content %}
+{% load static %}
+{% load cart_filters %}
+
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-10">
+      <h2 class="text-center fw-bold">🛒 Shopping Cart</h2>
+      <hr />
+
+      {% if template_data.movies_in_cart %}
+      <!-- Shopping Cart Table -->
+      <div class="table-responsive">
+        <table class="table table-hover text-center align-middle">
+          <thead class="table-dark">
+            <tr>
+              <th scope="col">Movie</th>
+              <th scope="col">Name</th>
+              <th scope="col">Price</th>
+              <th scope="col">Quantity</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for movie in template_data.movies_in_cart %}
+            <tr>
+              <td>
+                {% if movie.image and movie.image.url %}
+                  <img src="https://image.tmdb.org/t/p/w500{{ movie.image }}" alt="{{ movie.name }}" width="100">
+                {% else %}
+                  <img src="{% static 'img/default-movie.png' %}" alt="Default Movie Poster" width="100">
+                {% endif %}
+              </td>              
+              <td class="fw-bold">{{ movie.name }}</td>
+              <td class="text-primary">${{ movie.price }}</td>
+              <td>{{ request.session.cart|get_quantity:movie.id }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Cart Summary -->
+      <div class="row mt-4">
+        <div class="col-md-6">
+          <h4><b>Total to pay:</b> <span class="text-success">${{ template_data.cart_total }}</span></h4>
+        </div>
+        <div class="col-md-6 text-end">
+          <a href="{% url 'cart.purchase' %}" class="btn btn-success">
+            Purchase
+          </a>
+          <a href="{% url 'cart.clear' %}" class="btn btn-danger">
+            Remove All
+          </a>
+        </div>
+      </div>
+      {% else %}
+      <p class="text-center text-muted mt-4">Your cart is empty. Add some movies!</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
