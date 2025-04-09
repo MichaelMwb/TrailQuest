@@ -49,7 +49,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'TrailQuest.urls'
+ROOT_URLCONF = 'TRAILQUEST.urls'
 
 TEMPLATES = [
     {
@@ -66,7 +66,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'TrailQuest.wsgi.application'
+WSGI_APPLICATION = 'TRAILQUEST.wsgi.application'
 
 
 # Database
