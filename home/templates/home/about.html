@@ -1,36 +1,42 @@
 {% extends 'base.html' %}
 {% block content %}
 {% load static %}
-<div class="p-3">
+<div class="py-5" style="background-color: #d0f0f2;">
   <div class="container">
-    <div class="row mt-3">
-      <div class="col-md-6 mx-auto mb-3">
-        <h2>About</h2>
-        <hr />
-        <p>
-           At Movies Store, we offer a vast digital library
-           that spans across genres, ensuring there's
-           something for every movie lover. Browse our
-           extensive collection of films, including the
-           latest releases, timeless classics, and hidden
-           gems. With just a few clicks, you can rent or
-           purchase your favorite titles and instantly
-           stream them in high-definition quality.
-        </p>
-        <p>
-          Discover the convenience of our digital platform,
-          where you have the flexibility to watch movies
-          on your preferred device, whether it's a smart
-          TV, tablet, or smartphone. With our intuitive
-          search and recommendation features, finding your
-          next movie night pick has never been easier.
-        </p>
+    <div class="row justify-content-center align-items-center">
+      <div class="col-lg-6">
+        <div class="card shadow-lg rounded border-0 p-4">
+          <div class="card-body">
+            <h2>About</h2>
+            <hr />
+            <p>
+              At TrailQuest, we offer a simple trail generator
+              tailored to every user, ensuring there's
+              something for every hiker. Enter basic trip details, 
+              like location, trip duration, and interests, you can 
+              find the most suitable camping plan for your needs.
+              With just a few clicks, you can plan and create your 
+              own hiking and camping itinerary with nearby trails 
+              and campsites.
+            </p>
+            <p>
+              Discover the convenience of our digital platform,
+              where you have the flexibility to plan hiking trips
+              on your preferred device, whether it's a smart
+              TV, tablet, or smartphone. With our intuitive
+              search and recommendation features, finding your
+              next nature escape has never been easier.
+            </p>
+          </div>
+        </div>
       </div>
-      <div class="col-md-6 mx-auto mb-3 text-center">
-        <img src="{% static 'img/logoDark.png' %}"
-             height="80%"
-             width="90%"
-             alt="about" />
+      <div class="col-lg-6 d-none d-lg-flex align-items-center justify-content-center">
+        <div class="text-center">
+          <img src="{% static 'img/logomain.png' %}" alt="TrailQuest logo" class="img-fluid rounded mb-3">
+          <blockquote class="blockquote text-dark">
+            <p>“Every explorer starts with a first step.”</p>
+          </blockquote>
+        </div>
       </div>
     </div>
   </div>
