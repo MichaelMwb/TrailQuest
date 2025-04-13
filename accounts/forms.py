@@ -51,3 +51,29 @@ class PasswordResetForm(forms.Form):
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
         label="Confirm New Password"
     )
+
+from django import forms
+from django import forms
+from .models import TripPreferences
+
+class TripPreferencesForm(forms.Form):
+    location = forms.CharField(max_length=100, label="Location", widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter a location'}))
+    duration = forms.IntegerField(min_value=1, label="Trip Duration (days)", widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Number of days'}))
+    
+    ACTIVITIES_CHOICES = [
+        ('hiking', 'Hiking'),
+        ('camping', 'Camping'),
+        ('both', 'Both'),
+    ]
+    activities = forms.ChoiceField(choices=ACTIVITIES_CHOICES, label="Choose Activity", widget=forms.Select(attrs={'class': 'form-control'}))
+    
+    DIFFICULTY_CHOICES = [
+        ('easy', 'Easy'),
+        ('medium', 'Medium'),
+        ('hard', 'Hard'),
+    ]
+    difficulty = forms.ChoiceField(choices=DIFFICULTY_CHOICES, label="Trail Difficulty", widget=forms.Select(attrs={'class': 'form-control'}))
+    
+    group_size = forms.IntegerField(min_value=1, label="Group Size", widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'How many people?'}))
+    
+    trip_name = forms.CharField(max_length=100, required=False, label="Trip Name (optional)", widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Name your trip'}))

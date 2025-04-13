@@ -9,8 +9,8 @@ from .forms import ForgotPasswordForm
 from .models import UserProfile
 from django.contrib.auth import update_session_auth_hash
 from .forms import PasswordResetForm
+from .forms import TripPreferencesForm
 
-@login_required
 @login_required
 def logout(request):
     auth_logout(request)
@@ -112,3 +112,16 @@ def reset_password(request):
         form = PasswordResetForm()
 
     return render(request, "accounts/reset_password.html", {"form": form})
+
+from django.shortcuts import render, redirect
+from .forms import TripPreferencesForm
+
+def trip_preferences_view(request):
+    if request.method == 'POST':
+        form = TripPreferencesForm(request.POST)
+        if form.is_valid():
+            trip_data = form.cleaned_data
+            return render(request, 'accounts/trip_suggestions.html', {'trip': trip_data})
+    else:
+        form = TripPreferencesForm()
+    return render(request, 'accounts/trip_preferences.html', {'form': form})
