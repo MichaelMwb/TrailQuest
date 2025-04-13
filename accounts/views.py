@@ -116,12 +116,32 @@ def reset_password(request):
 from django.shortcuts import render, redirect
 from .forms import TripPreferencesForm
 
+from django.shortcuts import render, redirect
+from .forms import TripPreferencesForm
+from .models import TripPreferences
+
 def trip_preferences_view(request):
     if request.method == 'POST':
         form = TripPreferencesForm(request.POST)
         if form.is_valid():
-            trip_data = form.cleaned_data
-            return render(request, 'accounts/trip_suggestions.html', {'trip': trip_data})
+            cd = form.cleaned_data  # Get the cleaned data from the form
+            
+            # Create a new TripPreferences model instance in the database.
+            new_trip = TripPreferences.objects.create(
+                location=cd['location'],
+                duration_days=cd['duration'],  # Map form field 'duration' to model field 'duration_days'
+                activities=cd['activities'],
+                difficulty=cd['difficulty'],
+                group_size=cd['group_size'],
+                trip_name=cd['trip_name'] if cd['trip_name'] else "Untitled Trip"
+            )
+            
+            # After saving, render the trip suggestions page with the new_trip model instance.
+            return render(request, 'accounts/trip_suggestions.html', {'trip': new_trip})
+        else:
+            # If the form is invalid, re-render the preferences page with errors.
+            return render(request, 'accounts/trip_preferences.html', {'form': form})
     else:
+        # For GET requests, display an empty TripPreferencesForm.
         form = TripPreferencesForm()
-    return render(request, 'accounts/trip_preferences.html', {'form': form})
+        return render(request, 'accounts/trip_preferences.html', {'form': form})
