@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div class="container mt-5">
+  <div class="card shadow-lg">
+    <div class="card-header bg-success text-white">
+      <h2 class="card-title mb-0">Your Trip Suggestions</h2>
+    </div>
+    <div class="card-body">
+      <ul class="list-group list-group-flush mb-3">
+        <li class="list-group-item">
+          <strong>Location:</strong> {{ trip.location }}
+        </li>
+        <li class="list-group-item">
+          <strong>Duration:</strong> {{ trip.duration }} days
+        </li>
+        <li class="list-group-item">
+          <strong>Activity:</strong> {{ trip.activities }}
+        </li>
+        <li class="list-group-item">
+          <strong>Difficulty:</strong> {{ trip.difficulty }}
+        </li>
+        <li class="list-group-item">
+          <strong>Group Size:</strong> {{ trip.group_size }}
+        </li>
+        {% if trip.trip_name %}
+          <li class="list-group-item">
+            <strong>Trip Name:</strong> {{ trip.trip_name }}
+          </li>
+        {% endif %}
+      </ul>
+      <div class="d-flex justify-content-between">
+        <a href="{% url 'trip_preferences' %}" class="btn btn-secondary">Plan Another Trip</a>
+        <!-- Optional button for future features (e.g., saving or editing itinerary) -->
+        <a href="#" class="btn btn-primary">Save Itinerary</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
