@@ -12,6 +12,7 @@ from .forms import PasswordResetForm
 from .forms import TripPreferencesForm
 from openai import OpenAI
 import json
+from TRAILQUEST.settings import OPENAI_API_KEY
 
 @login_required
 def logout(request):
@@ -121,7 +122,7 @@ from .models import TripPreferences
 
 def trip_preferences_view(request):
     client = OpenAI(
-        api_key="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"
+        api_key = OPENAI_API_KEY
     )
 
     if request.method == 'POST':
