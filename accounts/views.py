@@ -10,6 +10,8 @@ from .models import UserProfile
 from django.contrib.auth import update_session_auth_hash
 from .forms import PasswordResetForm
 from .forms import TripPreferencesForm
+from openai import OpenAI
+import json
 
 @login_required
 def logout(request):
@@ -115,33 +117,71 @@ def reset_password(request):
 
 from django.shortcuts import render, redirect
 from .forms import TripPreferencesForm
-
-from django.shortcuts import render, redirect
-from .forms import TripPreferencesForm
 from .models import TripPreferences
 
 def trip_preferences_view(request):
+    client = OpenAI(
+        api_key="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"
+    )
+
     if request.method == 'POST':
         form = TripPreferencesForm(request.POST)
         if form.is_valid():
-            cd = form.cleaned_data  # Get the cleaned data from the form
+            cd = form.cleaned_data
+            print('Before Call')
             
-            # Create a new TripPreferences model instance in the database.
+            # Construct the prompt with explicit instructions for JSON format
+            prompt = f"""Create a detailed itinerary for a {cd['duration']}-day trip to {cd['location']}.
+            Trip name: {cd['trip_name']}
+            Activity type: {cd['activities']}
+            Difficulty level: {cd['difficulty']}
+            Group size: {cd['group_size']}
+            
+            Please provide a detailed day-by-day itinerary in the following JSON format:
+            {{
+                "name": "trip name",
+                "location": "location name",
+                "difficulty": "easy/medium/hard",
+                "days": {{
+                    "1": [
+                        {{
+                            "name": "activity name",
+                            "description": "activity description",
+                            "duration": "duration in hours"
+                        }}
+                    ]
+                }}
+            }}"""
+            
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",  # Changed from gpt-4o-mini to gpt-4
+                messages=[
+                    {"role": "system", "content": "You are an expert trail and camping trip planner that is helping a user plan a hiking, camping, or both trip. Only include activities that are related to hiking or camping. Always respond with valid JSON."},
+                    {"role": "user", "content": prompt}
+                ],
+                response_format={"type": "json_object"}  # Simplified response format
+            )
+            
+            print('After Call')
+            itinerary_data = json.loads(response.choices[0].message.content)
+            
+            # Create a new TripPreferences model instance in the database
             new_trip = TripPreferences.objects.create(
                 location=cd['location'],
-                duration_days=cd['duration'],  # Map form field 'duration' to model field 'duration_days'
+                duration_days=cd['duration'],
                 activities=cd['activities'],
                 difficulty=cd['difficulty'],
                 group_size=cd['group_size'],
                 trip_name=cd['trip_name'] if cd['trip_name'] else "Untitled Trip"
             )
             
-            # After saving, render the trip suggestions page with the new_trip model instance.
-            return render(request, 'accounts/trip_suggestions.html', {'trip': new_trip})
+            # After saving, render the trip suggestions page with the new_trip model instance
+            return render(request, 'accounts/trip_suggestions.html', {
+                'trip': new_trip,
+                'itinerary': itinerary_data
+            })
         else:
-            # If the form is invalid, re-render the preferences page with errors.
             return render(request, 'accounts/trip_preferences.html', {'form': form})
     else:
-        # For GET requests, display an empty TripPreferencesForm.
         form = TripPreferencesForm()
         return render(request, 'accounts/trip_preferences.html', {'form': form})
