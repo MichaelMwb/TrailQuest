@@ -1,40 +1,85 @@
 {% extends "base.html" %}
 {% load static %}
 {% block content %}
+<style>
+  .accordion-button {
+    background-color: #198754 !important;  /* Bootstrap success color */
+    color: white !important;
+  }
+  .accordion-button:not(.collapsed) {
+    background-color: #198754 !important;  /* Same color as default */
+    color: white !important;
+  }
+  .accordion-button:focus {
+    box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25) !important;  /* Success green with 25% opacity */
+  }
+</style>
+
 <div class="container mt-5">
   <div class="card shadow-lg">
     <div class="card-header bg-success text-white">
-      <h2 class="card-title mb-0">Your Trip Suggestions</h2>
+      <h2 class="card-title mb-0">{{ itinerary.name }}</h2>
     </div>
     <div class="card-body">
-      <ul class="list-group list-group-flush mb-3">
+      <!-- Trip Details -->
+      <h3 class="mb-3">Trip Details</h3>
+      <ul class="list-group list-group-flush mb-4">
         <li class="list-group-item">
-          <strong>Location:</strong> {{ trip.location }}
+          <strong>Location:</strong> {{ itinerary.location }}
+        </li>
+        <li class="list-group-item">
+          <strong>Difficulty:</strong> {{ itinerary.difficulty }}
         </li>
         <li class="list-group-item">
           <strong>Duration:</strong> {{ trip.duration_days }} days
         </li>
         <li class="list-group-item">
-          <strong>Activity:</strong> {{ trip.activities }}
-        </li>
-        <li class="list-group-item">
-          <strong>Difficulty:</strong> {{ trip.difficulty }}
+          <strong>Activity Type:</strong> {{ trip.activities }}
         </li>
         <li class="list-group-item">
           <strong>Group Size:</strong> {{ trip.group_size }}
         </li>
-        {% if trip.trip_name %}
-          <li class="list-group-item">
-            <strong>Trip Name:</strong> {{ trip.trip_name }}
-          </li>
-        {% endif %}
       </ul>
-      <div class="d-flex justify-content-between">
+
+      <!-- Daily Itinerary -->
+      <h3 class="mb-3">Daily Activities</h3>
+      <div class="accordion" id="itineraryAccordion">
+        {% for day_number, activities in itinerary.days.items %}
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button" 
+                      type="button" 
+                      data-bs-toggle="collapse" 
+                      data-bs-target="#day{{ day_number }}">
+                Day {{ day_number }}
+              </button>
+            </h2>
+            <div id="day{{ day_number }}" 
+                 class="accordion-collapse collapse {% if forloop.first %}show{% endif %}">
+              <div class="accordion-body">
+                {% for activity in activities %}
+                  <div class="card mb-3">
+                    <div class="card-body">
+                      <h5 class="card-title">{{ activity.name }}</h5>
+                      <p class="card-text">{{ activity.description }}</p>
+                      <p class="card-text">
+                        <small class="text-muted">Duration: {{ activity.duration }}</small>
+                      </p>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="d-flex justify-content-between mt-4">
         <a href="{% url 'trip_preferences' %}" class="btn btn-secondary">Plan Another Trip</a>
-        <!-- Optional button for future features (e.g., saving or editing itinerary) -->
-        <a href="#" class="btn btn-primary">Save Itinerary</a>
+        <button class="btn btn-primary" onclick="window.print()">Print Itinerary</button>
       </div>
     </div>
   </div>
 </div>
+
 {% endblock %}
