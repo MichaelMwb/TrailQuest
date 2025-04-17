@@ -9,12 +9,20 @@
           <h2 class="mb-0">Plan Your TrailQuest Trip</h2>
         </div>
         <div class="card-body">
-          <form method="POST">
+          <form method="POST" id="trip-form">
             {% csrf_token %}
             {% for field in form %}
               <div class="form-group">
                 {{ field.label_tag }}
-                {{ field }}
+                {% if field.name == "location" %}
+                  <!-- Add an ID to the location field for JavaScript targeting -->
+                  {{ field }}
+                  <div id="location-error" class="text-danger small" style="display: none;">
+                    Please select a valid city from the dropdown.
+                  </div>
+                {% else %}
+                  {{ field }}
+                {% endif %}
                 {% if field.errors %}
                   <div class="text-danger small">
                     {{ field.errors }}
@@ -29,4 +37,47 @@
     </div>
   </div>
 </div>
+
+<!-- Include Google Places API -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyANVv0AL0Z8nFUl2ZwM54k6ftxMUAC4CXg&libraries=places"></script>
+<script>
+  function initAutocomplete() {
+    const locationInput = document.getElementById('id_location'); // Target the location field
+    const locationError = document.getElementById('location-error'); // Error message element
+    let isValidLocation = false; // Flag to track if a valid city is selected
+
+    // Initialize Google Places Autocomplete
+    const autocomplete = new google.maps.places.Autocomplete(locationInput, {
+      types: ['(cities)'], // Restrict to cities only
+      componentRestrictions: { country: 'us' } // Restrict to U.S. cities
+    });
+
+    // Handle place selection
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace();
+      if (place && place.formatted_address) {
+        isValidLocation = true; // Mark as valid if a city is selected
+        locationError.style.display = 'none'; // Hide error message
+      }
+    });
+
+    // Clear the flag if the user types manually
+    locationInput.addEventListener('input', () => {
+      isValidLocation = false; // Reset the flag if the user types
+    });
+
+    // Validate the form on submission
+    const form = document.getElementById('trip-form');
+    form.addEventListener('submit', (e) => {
+      if (!isValidLocation) {
+        e.preventDefault(); // Prevent form submission
+        locationError.style.display = 'block'; // Show error message
+        locationInput.focus(); // Focus the location field
+      }
+    });
+  }
+
+  // Initialize autocomplete when the page loads
+  document.addEventListener('DOMContentLoaded', initAutocomplete);
+</script>
 {% endblock %}
