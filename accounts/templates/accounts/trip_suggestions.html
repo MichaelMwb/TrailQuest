@@ -61,7 +61,7 @@
                   {% for activity in activities %}
                     <div class="card mb-3">
                       <div class="card-body">
-                        <h5 class="card-title">{{ activity.name }}</h5>
+                        <h5 class="card-title"> <a href= {{activity.location}} target="_blank"> {{activity.name}} </a> </h5>
                         <p class="card-text">{{ activity.description }}</p>
                         <p class="card-text">
                           <small class="text-muted">Duration: {{ activity.duration }}</small>

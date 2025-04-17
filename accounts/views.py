@@ -12,6 +12,7 @@ from .forms import PasswordResetForm
 from .forms import TripPreferencesForm
 from openai import OpenAI
 import json
+from TRAILQUEST.settings import OPENAI_API_KEY
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 
@@ -21,15 +22,18 @@ def logout(request):
     return redirect('accounts.login')
 
 def login(request):
-    template_data = {}
-    template_data['title'] = 'Login'
+    # Redirect authenticated users to the trip preferences page
+    if request.user.is_authenticated:
+        return redirect('trip_preferences')  # Replace with the appropriate redirect URL
+
+    template_data = {'title': 'Login'}
     if request.method == 'GET':
-        return render(request, 'accounts/login.html', {'template_data': template_data})
+        return render(request, 'accounts/login.html', template_data)
     elif request.method == 'POST':
-        user = authenticate(request, username = request.POST['username'], password = request.POST['password'])
+        user = authenticate(request, username=request.POST['username'], password=request.POST['password'])
         if user is None:
             template_data['error'] = 'The username or password is incorrect.'
-            return render(request, 'accounts/login.html', {'template_data': template_data})
+            return render(request, 'accounts/login.html', template_data)
         else:
             auth_login(request, user)
             return redirect('trip_preferences')
@@ -126,7 +130,7 @@ import json
 @login_required
 def trip_preferences_view(request):
     client = OpenAI(
-        api_key="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"
+        api_key = OPENAI_API_KEY
     )
 
     if request.method == 'POST':
@@ -150,6 +154,7 @@ def trip_preferences_view(request):
                     "1": [
                         {{
                             "name": "activity name",
+                            "location": "activity location",
                             "description": "activity description",
                             "duration": "duration in hours"
                         }}
@@ -176,6 +181,11 @@ def trip_preferences_view(request):
 
                 # Parse the cleaned response
                 itinerary_data = json.loads(cleaned_content)
+
+                for day in itinerary_data['days']:
+                    for i in range(len(itinerary_data['days'][day])):
+                        # Add a Google Maps link to the location
+                        itinerary_data['days'][day][i]['location'] = "https://www.google.com/maps/search/?api=1&query=" + itinerary_data['days'][day][i]['location'].lower().replace(" ", "+")
 
                 # Save the trip
                 Trip.objects.create(
