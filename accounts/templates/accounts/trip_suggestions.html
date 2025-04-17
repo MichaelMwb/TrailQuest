@@ -13,6 +13,50 @@
   .accordion-button:focus {
     box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25) !important;  /* Success green with 25% opacity */
   }
+
+  /* Print-specific styles */
+  @media print {
+    /* Hide elements that shouldn't be printed */
+    .navbar, .btn, .d-flex {
+      display: none !important;
+    }
+
+    /* Ensure all accordion sections are expanded when printing */
+    .accordion-collapse {
+      display: block !important;
+    }
+
+    /* Remove background colors for better printing */
+    .card-header, .accordion-button {
+      background-color: white !important;
+      color: black !important;
+    }
+
+    /* Add page breaks between days */
+    .accordion-item {
+      page-break-inside: avoid;
+    }
+
+    /* Add margins for better print layout */
+    .container {
+      margin: 0 !important;
+      padding: 0 !important;
+      max-width: 100% !important;
+    }
+
+    /* Ensure links are visible in print */
+    a {
+      color: black !important;
+      text-decoration: none !important;
+    }
+
+    /* Add a header for each printed page */
+    @page {
+      @top-center {
+        content: "{{ itinerary.name }} - TrailQuest Itinerary";
+      }
+    }
+  }
 </style>
 
 <div class="container mt-5">
