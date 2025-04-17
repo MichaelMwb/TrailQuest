@@ -22,15 +22,18 @@ def logout(request):
     return redirect('accounts.login')
 
 def login(request):
-    template_data = {}
-    template_data['title'] = 'Login'
+    # Redirect authenticated users to the trip preferences page
+    if request.user.is_authenticated:
+        return redirect('trip_preferences')  # Replace with the appropriate redirect URL
+
+    template_data = {'title': 'Login'}
     if request.method == 'GET':
-        return render(request, 'accounts/login.html', {'template_data': template_data})
+        return render(request, 'accounts/login.html', template_data)
     elif request.method == 'POST':
-        user = authenticate(request, username = request.POST['username'], password = request.POST['password'])
+        user = authenticate(request, username=request.POST['username'], password=request.POST['password'])
         if user is None:
             template_data['error'] = 'The username or password is incorrect.'
-            return render(request, 'accounts/login.html', {'template_data': template_data})
+            return render(request, 'accounts/login.html', template_data)
         else:
             auth_login(request, user)
             return redirect('trip_preferences')
