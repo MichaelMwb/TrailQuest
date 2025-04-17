@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login as auth_login, authenticate, logout as auth_logout
 from .forms import CustomUserCreationForm, CustomErrorList
 from django.shortcuts import redirect
@@ -13,11 +13,13 @@ from .forms import TripPreferencesForm
 from openai import OpenAI
 import json
 from TRAILQUEST.settings import OPENAI_API_KEY
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 
 @login_required
 def logout(request):
     auth_logout(request)
-    return redirect('trip_preferences')
+    return redirect('accounts.login')
 
 def login(request):
     template_data = {}
@@ -118,8 +120,11 @@ def reset_password(request):
 
 from django.shortcuts import render, redirect
 from .forms import TripPreferencesForm
-from .models import TripPreferences
+from .models import TripPreferences, Trip
+from openai import OpenAI
+import json
 
+@login_required
 def trip_preferences_view(request):
     client = OpenAI(
         api_key = OPENAI_API_KEY
@@ -129,9 +134,8 @@ def trip_preferences_view(request):
         form = TripPreferencesForm(request.POST)
         if form.is_valid():
             cd = form.cleaned_data
-            print('Before Call')
-            
-            # Construct the prompt with explicit instructions for JSON format
+
+            # Construct the prompt
             prompt = f"""Create a detailed itinerary for a {cd['duration']}-day trip to {cd['location']}.
             Trip name: {cd['trip_name']}
             Activity type: {cd['activities']}
@@ -154,41 +158,99 @@ def trip_preferences_view(request):
                     ]
                 }}
             }}"""
-            
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",  # Changed from gpt-4o-mini to gpt-4
-                messages=[
-                    {"role": "system", "content": "You are an expert trail and camping trip planner that is helping a user plan a hiking, camping, or both trip. Only include activities that are related to hiking or camping. Always respond with valid JSON."},
-                    {"role": "user", "content": prompt}
-                ],
-                response_format={"type": "json_object"}  # Simplified response format
-            )
-            
-            print('After Call')
-            
-            itinerary_data = json.loads(response.choices[0].message.content)
-            for day in itinerary_data['days']:
-                for i in range(len(itinerary_data['days'][day])):
-                    # Add a Google Maps link to the location
-                    itinerary_data['days'][day][i]['location'] = "https://www.google.com/maps/search/?api=1&query=" + itinerary_data['days'][day][i]['location'].lower().replace(" ", "+")
-                        
-            # Create a new TripPreferences model instance in the database
-            new_trip = TripPreferences.objects.create(
-                location=cd['location'],
-                duration_days=cd['duration'],
-                activities=cd['activities'],
-                difficulty=cd['difficulty'],
-                group_size=cd['group_size'],
-                trip_name=cd['trip_name'] if cd['trip_name'] else "Untitled Trip"
-            )
-            
-            # After saving, render the trip suggestions page with the new_trip model instance
-            return render(request, 'accounts/trip_suggestions.html', {
-                'trip': new_trip,
-                'itinerary': itinerary_data
-            })
-        else:
-            return render(request, 'accounts/trip_preferences.html', {'form': form})
+
+            # Call OpenAI API
+            try:
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": "You are an expert trail and camping trip planner."},
+                        {"role": "user", "content": prompt}
+                    ]
+                )
+
+                # Debugging: Log the response
+                print("OpenAI API Response:", response)
+
+                # Extract and clean the response content
+                raw_content = response.choices[0].message.content
+                cleaned_content = raw_content.strip("```").strip("json").strip()  # Remove backticks and "json"
+
+                # Parse the cleaned response
+                itinerary_data = json.loads(cleaned_content)
+
+                for day in itinerary_data['days']:
+                    for i in range(len(itinerary_data['days'][day])):
+                        # Add a Google Maps link to the location
+                        itinerary_data['days'][day][i]['location'] = "https://www.google.com/maps/search/?api=1&query=" + itinerary_data['days'][day][i]['location'].lower().replace(" ", "+")
+
+                # Save the trip
+                Trip.objects.create(
+                    user=request.user,
+                    trip_name=cd['trip_name'] if cd['trip_name'] else "Untitled Trip",
+                    location=cd['location'],
+                    group_size=cd['group_size'],
+                    activity=cd['activities'],
+                    duration=cd['duration'],
+                    difficulty=cd['difficulty'],
+                    itinerary=json.dumps(itinerary_data),  # Save the itinerary JSON
+                    completed=False  # Mark as not completed
+                )
+
+                # Redirect to the trip suggestions page
+                return redirect('trip_suggestions')
+
+            except json.JSONDecodeError as jde:
+                print("JSONDecodeError:", jde)
+                messages.error(request, "The itinerary format is invalid. Please try again.")
+            except Exception as e:
+                print("Error:", e)
+                messages.error(request, "An error occurred while generating the itinerary. Please try again.")
     else:
         form = TripPreferencesForm()
-        return render(request, 'accounts/trip_preferences.html', {'form': form})
+
+    return render(request, 'accounts/trip_preferences.html', {'form': form})
+
+from django.shortcuts import render
+from .models import Trip  # Assuming you have a Trip model
+
+@login_required
+def past_trips(request):
+    # Retrieve completed trips for the logged-in user, ordered by most recent first
+    trips = Trip.objects.filter(user=request.user, completed=True).order_by('-id')
+    return render(request, 'accounts/past_trips.html', {'trips': trips})
+
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
+
+def complete_trip(request, trip_id):
+    if request.method == 'POST':
+        # Retrieve the trip using the primary key (id) and ensure it belongs to the logged-in user
+        trip = get_object_or_404(Trip, id=trip_id, user=request.user)
+        
+        # Mark the trip as completed
+        trip.completed = True
+        trip.save()
+
+        # Redirect to the "Past Trips" page
+        return redirect('past_trips')
+
+@login_required
+def trip_suggestions(request):
+    # Fetch the most recent incomplete trip for the logged-in user
+    current_trip = Trip.objects.filter(user=request.user, completed=False).order_by('-id').first()
+
+    if not current_trip:
+        # If no current trip exists, redirect to the "Plan a Trip" page
+        return redirect('trip_preferences')
+
+    # Parse the itinerary JSON if it exists
+    itinerary = None
+    if current_trip.itinerary:
+        itinerary = json.loads(current_trip.itinerary)
+
+    # Pass the current trip and itinerary to the template
+    return render(request, 'accounts/trip_suggestions.html', {
+        'trip': current_trip,
+        'itinerary': itinerary
+    })
