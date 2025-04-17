@@ -147,6 +147,7 @@ def trip_preferences_view(request):
                     "1": [
                         {{
                             "name": "activity name",
+                            "location": "activity location",
                             "description": "activity description",
                             "duration": "duration in hours"
                         }}
@@ -164,8 +165,13 @@ def trip_preferences_view(request):
             )
             
             print('After Call')
-            itinerary_data = json.loads(response.choices[0].message.content)
             
+            itinerary_data = json.loads(response.choices[0].message.content)
+            for day in itinerary_data['days']:
+                for i in range(len(itinerary_data['days'][day])):
+                    # Add a Google Maps link to the location
+                    itinerary_data['days'][day][i]['location'] = "https://www.google.com/maps/search/?api=1&query=" + itinerary_data['days'][day][i]['location'].lower().replace(" ", "+")
+                        
             # Create a new TripPreferences model instance in the database
             new_trip = TripPreferences.objects.create(
                 location=cd['location'],
