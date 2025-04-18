@@ -9,6 +9,13 @@
           <h2 class="mb-0">Plan Your TrailQuest Trip</h2>
         </div>
         <div class="card-body">
+          {% if messages %}
+            <div class="alert alert-info">
+                {% for message in messages %}
+                    {{ message }}
+                {% endfor %}
+            </div>
+          {% endif %}
           <form method="POST" id="trip-form">
             {% csrf_token %}
             {% for field in form %}
@@ -30,8 +37,14 @@
                 {% endif %}
               </div>
             {% endfor %}
-            <button type="submit" class="btn btn-primary mt-3">Generate Trip Plan</button>
+            <button type="submit" class="btn btn-primary mt-3" id="submit-button">Generate Trip Plan</button>
           </form>
+
+          <!-- Spinner -->
+          <div id="loading-indicator" style="display: none; text-align: center; margin-top: 20px;">
+            <div class="spinner"></div>
+            <p>Generating your itinerary... Please wait.</p>
+          </div>
         </div>
       </div>
     </div>
@@ -49,7 +62,7 @@
     // Initialize Google Places Autocomplete
     const autocomplete = new google.maps.places.Autocomplete(locationInput, {
       types: ['(cities)'], // Restrict to cities only
-      componentRestrictions: { country: 'us' } // Restrict to U.S. cities
+     // componentRestrictions: { country: 'us' } // Restrict to U.S. cities
     });
 
     // Handle place selection
@@ -79,5 +92,39 @@
 
   // Initialize autocomplete when the page loads
   document.addEventListener('DOMContentLoaded', initAutocomplete);
+
+  // Show spinner on form submission
+  const form = document.getElementById('trip-form');
+  const submitButton = document.getElementById('submit-button');
+  const loadingIndicator = document.getElementById('loading-indicator');
+
+  form.addEventListener('submit', function() {
+    submitButton.disabled = true; // Disable the submit button
+    loadingIndicator.style.display = 'block'; // Show the spinner
+  });
 </script>
+
+<style>
+  /* Spinner styles */
+  .spinner {
+    border: 4px solid #f3f3f3; /* Light grey */
+    border-top: 4px solid #198754; /* Blue */
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  #loading-indicator p {
+    margin-top: 10px;
+    font-size: 16px;
+    color: #555;
+  }
+</style>
 {% endblock %}

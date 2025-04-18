@@ -56,7 +56,7 @@ from .models import TripPreferences
 
 class TripPreferencesForm(forms.Form):
     location = forms.CharField(max_length=100, label="Location", widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter a location'}))
-    duration = forms.IntegerField(min_value=1, label="Trip Duration (days)", widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Number of days'}))
+    duration = forms.IntegerField(min_value=1, max_value=20, label="Trip Duration (days)", widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Number of days'}))
     
     ACTIVITIES_CHOICES = [
         ('hiking', 'Hiking'),
