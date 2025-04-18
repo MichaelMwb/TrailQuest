@@ -126,17 +126,24 @@ from .forms import TripPreferencesForm
 from .models import TripPreferences, Trip
 from openai import OpenAI
 import json
+from openai import Timeout
+import logging
+
+logger = logging.getLogger(__name__)
 
 @login_required
 def trip_preferences_view(request):
     client = OpenAI(
-        api_key = OPENAI_API_KEY
+        api_key=OPENAI_API_KEY
     )
 
     if request.method == 'POST':
         form = TripPreferencesForm(request.POST)
         if form.is_valid():
             cd = form.cleaned_data
+
+            # Delete any existing incomplete trips for the user
+            Trip.objects.filter(user=request.user, completed=False).delete()
 
             # Construct the prompt
             prompt = f"""Create a detailed itinerary for a {cd['duration']}-day trip to {cd['location']}.
@@ -169,62 +176,94 @@ def trip_preferences_view(request):
                     messages=[
                         {"role": "system", "content": "You are an expert trail and camping trip planner."},
                         {"role": "user", "content": prompt}
-                    ]
+                    ],
+                    timeout=60  # Increase timeout to 60 seconds
                 )
+            except Timeout as e:
+                print("OpenAI API Timeout:", e)
+                messages.error(request, "The request to the OpenAI API timed out. Please try again.")
+                return redirect('trip_preferences')
 
-                # Debugging: Log the response
-                print("OpenAI API Response:", response)
+            # Debugging: Log the response
+            logger.debug("OpenAI API Response: %s", response)
 
-                # Extract and clean the response content
-                raw_content = response.choices[0].message.content
-                cleaned_content = raw_content.strip("```").strip("json").strip()  # Remove backticks and "json"
+            # Extract and clean the response content
+            raw_content = response.choices[0].message.content
+            logger.debug("Raw Response Content: %s", raw_content)
 
-                # Parse the cleaned response
+            # Improved cleaning logic
+            if "```json" in raw_content:
+                cleaned_content = raw_content.split("```json")[1].split("```")[0].strip()
+            elif "```" in raw_content:
+                cleaned_content = raw_content.split("```")[1].split("```")[0].strip()
+            else:
+                cleaned_content = raw_content.strip()
+
+            logger.debug("Cleaned Content: %s", cleaned_content)
+
+            # Validate the cleaned content
+            if not cleaned_content.startswith("{") or not cleaned_content.endswith("}"):
+                logger.error("Invalid JSON Format: %s", cleaned_content)
+                messages.error(request, "The OpenAI API returned an invalid itinerary format. Please try again.")
+                return redirect('trip_preferences')
+
+            # Attempt to parse the cleaned content
+            try:
                 itinerary_data = json.loads(cleaned_content)
+            except json.JSONDecodeError as e:
+                print("JSONDecodeError:", e)
+                messages.error(request, "Failed to parse the itinerary. Please try again.")
+                return redirect('trip_preferences')
 
-                for day in itinerary_data['days']:
-                    for i in range(len(itinerary_data['days'][day])):
-                        # Add a Google Maps link to the location
-                        itinerary_data['days'][day][i]['location'] = "https://www.google.com/maps/search/?api=1&query=" + itinerary_data['days'][day][i]['location'].lower().replace(" ", "+")
+            for day in itinerary_data['days']:
+                for i in range(len(itinerary_data['days'][day])):
+                    # Add a Google Maps link to the location
+                    itinerary_data['days'][day][i]['location'] = "https://www.google.com/maps/search/?api=1&query=" + itinerary_data['days'][day][i]['location'].lower().replace(" ", "+")
 
-                # Save the trip
-                Trip.objects.create(
-                    user=request.user,
-                    trip_name=cd['trip_name'] if cd['trip_name'] else "Untitled Trip",
-                    location=cd['location'],
-                    group_size=cd['group_size'],
-                    activity=cd['activities'],
-                    duration=cd['duration'],
-                    difficulty=cd['difficulty'],
-                    itinerary=json.dumps(itinerary_data),  # Save the itinerary JSON
-                    completed=False  # Mark as not completed
-                )
+            print("About to save the trip...")
+            # Save the trip
+            Trip.objects.create(
+                user=request.user,
+                trip_name=cd['trip_name'] if cd['trip_name'] else "Untitled Trip",
+                location=cd['location'],
+                group_size=cd['group_size'],
+                activity=cd['activities'],
+                duration=cd['duration'],
+                difficulty=cd['difficulty'],
+                itinerary=json.dumps(itinerary_data),  # Save the itinerary JSON
+                completed=False  # Mark as not completed
+            )
 
-                # Redirect to the trip suggestions page
-                return redirect('trip_suggestions')
+            logger.debug("Trip saved successfully. Redirecting to trip suggestions...")  # Debugging log
+            return redirect('trip_suggestions')
 
-            except json.JSONDecodeError as jde:
-                print("JSONDecodeError:", jde)
-                messages.error(request, "The itinerary format is invalid. Please try again.")
-            except Exception as e:
-                print("Error:", e)
-                messages.error(request, "An error occurred while generating the itinerary. Please try again.")
     else:
         form = TripPreferencesForm()
 
     return render(request, 'accounts/trip_preferences.html', {'form': form})
 
 from django.shortcuts import render
-from .models import Trip  # Assuming you have a Trip model
+from .models import Trip
+import json
 
 @login_required
 def past_trips(request):
     # Retrieve completed trips for the logged-in user, ordered by most recent first
     trips = Trip.objects.filter(user=request.user, completed=True).order_by('-id')
+
+    # Deserialize the itinerary JSON for each trip
+    for trip in trips:
+        if trip.itinerary:
+            try:
+                trip.itinerary = json.loads(trip.itinerary)  # Convert JSON string to Python dictionary
+            except json.JSONDecodeError:
+                trip.itinerary = None  # Handle invalid JSON gracefully
+
     return render(request, 'accounts/past_trips.html', {'trips': trips})
 
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
+from django.contrib import messages
 
 def complete_trip(request, trip_id):
     if request.method == 'POST':
@@ -235,6 +274,9 @@ def complete_trip(request, trip_id):
         trip.completed = True
         trip.save()
 
+        # Display a success message
+        messages.success(request, f"The trip '{trip.trip_name or trip.location}' has been marked as completed.")
+
         # Redirect to the "Past Trips" page
         return redirect('past_trips')
 
@@ -244,13 +286,17 @@ def trip_suggestions(request):
     current_trip = Trip.objects.filter(user=request.user, completed=False).order_by('-id').first()
 
     if not current_trip:
-        # If no current trip exists, redirect to the "Plan a Trip" page
-        return redirect('trip_preferences')
+        # If no current trip exists, display a message and redirect to the trip planning page
+        messages.info(request, "You have no current itinerary. Start planning your next adventure today!")
+        return redirect('trip_preferences')  # Redirect to the trip planning page
 
     # Parse the itinerary JSON if it exists
     itinerary = None
     if current_trip.itinerary:
-        itinerary = json.loads(current_trip.itinerary)
+        try:
+            itinerary = json.loads(current_trip.itinerary)
+        except json.JSONDecodeError:
+            itinerary = None  # Handle invalid JSON gracefully
 
     # Pass the current trip and itinerary to the template
     return render(request, 'accounts/trip_suggestions.html', {
