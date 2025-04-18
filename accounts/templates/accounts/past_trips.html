@@ -8,19 +8,48 @@
             <hr />
 
             {% if trips %}
-                {% for trip in trips %}
-                    <!-- Centered Trip Header -->
-                    <div class="card-header bg-primary text-white py-2 text-center">
-                        <h5 class="mb-0 fw-bold">Trip - {{ trip.location }}</h5>
-                    </div>
+                <div class="accordion" id="pastTripsAccordion">
+                    {% for trip in trips %}
+                        <div class="accordion-item">
+                            <!-- Trip Header -->
+                            <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}" aria-expanded="false" aria-controls="collapse{{ forloop.counter }}">
+                                    {% if trip.trip_name and trip.trip_name != "Untitled Trip" %}
+                                        {{ trip.trip_name }} - {{ trip.location }}
+                                    {% else %}
+                                        {{ trip.location }}
+                                    {% endif %}
+                                </button>
+                            </h2>
 
-                    <!-- Trip Body with Improved Spacing -->
-                    <div class="card-body text-center pb-3 pt-3 px-4">
-                        <p class="mb-1 fs-5"><b class="text-dark">📅 Date:</b> {{ trip.date }}</p>
-                        <p class="mb-2 fs-5"><b class="text-dark">🧑‍🤝‍🧑 Group Size:</b> {{ trip.group_size }}</p>
-                        <p class="mb-2 fs-5"><b class="text-dark">📍 Location:</b> {{ trip.location }}</p>
-                    </div>
-                {% endfor %}
+                            <!-- Trip Body -->
+                            <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse" aria-labelledby="heading{{ forloop.counter }}" data-bs-parent="#pastTripsAccordion">
+                                <div class="accordion-body">
+                                    {% if trip.itinerary and trip.itinerary.days %}
+                                        <ul class="list-group">
+                                            {% for day, activities in trip.itinerary.days.items %}
+                                                <li class="list-group-item">
+                                                    <strong>Day {{ day }}</strong>
+                                                    <ul>
+                                                        {% for activity in activities %}
+                                                            <li>
+                                                                <a href="{{ activity.location }}" target="_blank" class="text-decoration-none">
+                                                                    {{ activity.name }}
+                                                                </a>
+                                                            </li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% else %}
+                                        <p>No landmarks available for this trip.</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
             {% else %}
                 <!-- Message when no past trips exist -->
                 <div class="alert alert-info text-center">
