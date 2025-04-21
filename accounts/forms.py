@@ -52,8 +52,6 @@ class PasswordResetForm(forms.Form):
         label="Confirm New Password"
     )
 
-from django import forms
-from django import forms
 from .models import TripPreferences
 
 class TripPreferencesForm(forms.Form):

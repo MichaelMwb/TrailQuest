@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="p-3 px-5">
+    <div class="row mt-3">
+        <div class="col mx-auto mb-3">
+            <!-- Styled Page Title -->
+            <h2 class="fw-bold text-primary">🌄 My Past Trips</h2>
+            <hr />
+
+            {% if trips %}
+                {% for trip in trips %}
+                    <!-- Centered Trip Header -->
+                    <div class="card-header bg-primary text-white py-2 text-center">
+                        <h5 class="mb-0 fw-bold">Trip - {{ trip.location }}</h5>
+                    </div>
+
+                    <!-- Trip Body with Improved Spacing -->
+                    <div class="card-body text-center pb-3 pt-3 px-4">
+                        <p class="mb-1 fs-5"><b class="text-dark">📅 Date:</b> {{ trip.date }}</p>
+                        <p class="mb-2 fs-5"><b class="text-dark">🧑‍🤝‍🧑 Group Size:</b> {{ trip.group_size }}</p>
+                        <p class="mb-2 fs-5"><b class="text-dark">📍 Location:</b> {{ trip.location }}</p>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <!-- Message when no past trips exist -->
+                <div class="alert alert-info text-center">
+                    <p>You have no past trips yet. Start planning your next adventure!</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock content %}
