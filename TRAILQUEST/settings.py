@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'accounts',
+    'home',
 ]
 
 MIDDLEWARE = [
@@ -123,3 +124,9 @@ STATICFILES_DIRS = [ BASE_DIR / "static" ]
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+OPENAI_API_KEY = "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"
+
+LOGIN_REDIRECT_URL = '/'  # Redirect to the home page after login
+LOGOUT_REDIRECT_URL = '/accounts/login/'  # Redirect to the login page after logout
+

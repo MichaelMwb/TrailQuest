@@ -13,73 +13,134 @@
   .accordion-button:focus {
     box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25) !important;  /* Success green with 25% opacity */
   }
+
+  /* Print-specific styles */
+  @media print {
+    /* Hide elements that shouldn't be printed */
+    .navbar, .btn, .d-flex {
+      display: none !important;
+    }
+
+    /* Ensure all accordion sections are expanded when printing */
+    .accordion-collapse {
+      display: block !important;
+    }
+
+    /* Remove background colors for better printing */
+    .card-header, .accordion-button {
+      background-color: white !important;
+      color: black !important;
+    }
+
+    /* Add page breaks between days */
+    .accordion-item {
+      page-break-inside: avoid;
+    }
+
+    /* Add margins for better print layout */
+    .container {
+      margin: 0 !important;
+      padding: 0 !important;
+      max-width: 100% !important;
+    }
+
+    /* Ensure links are visible in print */
+    a {
+      color: black !important;
+      text-decoration: none !important;
+    }
+
+    /* Add a header for each printed page */
+    @page {
+      @top-center {
+        content: "{{ itinerary.name }} - TrailQuest Itinerary";
+      }
+    }
+  }
 </style>
 
 <div class="container mt-5">
-  <div class="card shadow-lg">
-    <div class="card-header bg-success text-white">
-      <h2 class="card-title mb-0">{{ itinerary.name }}</h2>
-    </div>
-    <div class="card-body">
-      <!-- Trip Details -->
-      <h3 class="mb-3">Trip Details</h3>
-      <ul class="list-group list-group-flush mb-4">
-        <li class="list-group-item">
-          <strong>Location:</strong> {{ itinerary.location }}
-        </li>
-        <li class="list-group-item">
-          <strong>Difficulty:</strong> {{ itinerary.difficulty }}
-        </li>
-        <li class="list-group-item">
-          <strong>Duration:</strong> {{ trip.duration_days }} days
-        </li>
-        <li class="list-group-item">
-          <strong>Activity Type:</strong> {{ trip.activities }}
-        </li>
-        <li class="list-group-item">
-          <strong>Group Size:</strong> {{ trip.group_size }}
-        </li>
-      </ul>
+  {% if itinerary %}
+    <div class="card shadow-lg">
+      <div class="card-header bg-success text-white">
+        <h2 class="card-title mb-0">{{ itinerary.name }}</h2>
+      </div>
+      <div class="card-body">
+        <!-- Trip Details -->
+        <h3 class="mb-3">Trip Details</h3>
+        <ul class="list-group list-group-flush mb-4">
+          <li class="list-group-item">
+            <strong>Location:</strong> {{ itinerary.location }}
+          </li>
+          <li class="list-group-item">
+            <strong>Difficulty:</strong> {{ itinerary.difficulty }}
+          </li>
+          <li class="list-group-item">
+            <strong>Duration:</strong> {{ trip.duration }} days
+          </li>
+          <li class="list-group-item">
+            <strong>Activity Type:</strong> {{ trip.activity }}
+          </li>
+          <li class="list-group-item">
+            <strong>Group Size:</strong> {{ trip.group_size }}
+          </li>
+        </ul>
 
-      <!-- Daily Itinerary -->
-      <h3 class="mb-3">Daily Activities</h3>
-      <div class="accordion" id="itineraryAccordion">
-        {% for day_number, activities in itinerary.days.items %}
-          <div class="accordion-item">
-            <h2 class="accordion-header">
-              <button class="accordion-button" 
-                      type="button" 
-                      data-bs-toggle="collapse" 
-                      data-bs-target="#day{{ day_number }}">
-                Day {{ day_number }}
-              </button>
-            </h2>
-            <div id="day{{ day_number }}" 
-                 class="accordion-collapse collapse {% if forloop.first %}show{% endif %}">
-              <div class="accordion-body">
-                {% for activity in activities %}
-                  <div class="card mb-3">
-                    <div class="card-body">
-                      <h5 class="card-title">{{ activity.name }}</h5>
-                      <p class="card-text">{{ activity.description }}</p>
-                      <p class="card-text">
-                        <small class="text-muted">Duration: {{ activity.duration }}</small>
-                      </p>
+        <!-- Daily Itinerary -->
+        <h3 class="mb-3">Daily Activities</h3>
+        <div class="accordion" id="itineraryAccordion">
+          {% for day_number, activities in itinerary.days.items %}
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button" 
+                        type="button" 
+                        data-bs-toggle="collapse" 
+                        data-bs-target="#day{{ day_number }}">
+                  Day {{ day_number }}
+                </button>
+              </h2>
+              <div id="day{{ day_number }}" 
+                   class="accordion-collapse collapse {% if forloop.first %}show{% endif %}">
+                <div class="accordion-body">
+                  {% for activity in activities %}
+                    <div class="card mb-3">
+                      <div class="card-body">
+                        <h5 class="card-title"> <a href= {{activity.location}} target="_blank"> {{activity.name}} </a> </h5>
+                        <p class="card-text">{{ activity.description }}</p>
+                        <p class="card-text">
+                          <small class="text-muted">Duration: {{ activity.duration }}</small>
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                {% endfor %}
+                  {% endfor %}
+                </div>
               </div>
             </div>
-          </div>
-        {% endfor %}
-      </div>
+          {% endfor %}
+        </div>
 
-      <div class="d-flex justify-content-between mt-4">
-        <a href="{% url 'trip_preferences' %}" class="btn btn-secondary">Plan Another Trip</a>
-        <button class="btn btn-primary" onclick="window.print()">Print Itinerary</button>
+        <div class="d-flex justify-content-between mt-4">
+          <!-- Print Itinerary Button on the Left -->
+          <button class="btn btn-primary" onclick="window.print()">Print Itinerary</button>
+
+          <!-- Mark as Completed Button in the Center -->
+          <form method="POST" action="{% url 'complete_trip' trip.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success mx-3">Mark as Completed</button>
+          </form>
+
+          <!-- Plan Another Trip Button on the Right -->
+          <a href="{% url 'trip_preferences' %}" class="btn btn-secondary">Plan Another Trip</a>
+        </div>
       </div>
     </div>
-  </div>
+  {% else %}
+    <!-- Message when no current itinerary exists -->
+    <div class="alert alert-warning text-center">
+      <p>No current itinerary found. Plan your next trip to get started!</p>
+      <a href="{% url 'trip_preferences' %}" class="btn btn-primary mt-3">Plan a Trip</a>
+    </div>
+  {% endif %}
 </div>
 
 {% endblock %}
