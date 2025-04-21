@@ -10,3 +10,4 @@ local/
 /accounts/__pycache__
 /accounts/migrations/__pycache__
 /accounts/migrations/__pycache__
+/home/__pycache__
