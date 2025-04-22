@@ -86,6 +86,40 @@
           </li>
         </ul>
 
+        <!-- Packing Checklist -->
+        <h3 class="mb-3">Packing Checklist</h3>
+        <div class="accordion mb-4" id="packingChecklistAccordion">
+          {% for category, items in itinerary.packing_checklist.items %}
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" 
+                        type="button" 
+                        data-bs-toggle="collapse" 
+                        data-bs-target="#packing{{ forloop.counter }}">
+                  {{ category|title }}
+                </button>
+              </h2>
+              <div id="packing{{ forloop.counter }}" 
+                   class="accordion-collapse collapse">
+                <div class="accordion-body">
+                  <ul class="list-group list-group-flush">
+                    {% for item in items %}
+                      <li class="list-group-item">
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" id="item{{ forloop.parentloop.counter }}{{ forloop.counter }}">
+                          <label class="form-check-label" for="item{{ forloop.parentloop.counter }}{{ forloop.counter }}">
+                            {{ item }}
+                          </label>
+                        </div>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
         <!-- Daily Itinerary -->
         <h3 class="mb-3">Daily Activities</h3>
         <div class="accordion" id="itineraryAccordion">

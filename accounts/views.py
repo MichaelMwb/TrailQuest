@@ -146,17 +146,24 @@ def trip_preferences_view(request):
             Trip.objects.filter(user=request.user, completed=False).delete()
 
             # Construct the prompt
-            prompt = f"""Create a detailed itinerary for a {cd['duration']}-day trip to {cd['location']}.
+            prompt = f"""Create a detailed itinerary and packing checklist for a {cd['duration']}-day trip to {cd['location']}.
             Trip name: {cd['trip_name']}
             Activity type: {cd['activities']}
             Difficulty level: {cd['difficulty']}
             Group size: {cd['group_size']}
             
-            Please provide a detailed day-by-day itinerary in the following JSON format:
+            Please provide a detailed day-by-day itinerary and packing checklist in the following JSON format:
             {{
                 "name": "trip name",
                 "location": "location name",
                 "difficulty": "easy/medium/hard",
+                "packing_checklist": {{
+                    "essentials": ["item1", "item2", "item3"],
+                    "clothing": ["item1", "item2", "item3"],
+                    "gear": ["item1", "item2", "item3"],
+                    "food_and_water": ["item1", "item2", "item3"],
+                    "safety": ["item1", "item2", "item3"]
+                }},
                 "days": {{
                     "1": [
                         {{
