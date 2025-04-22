@@ -88,7 +88,7 @@
 
         <!-- Packing Checklist -->
         <h3 class="mb-3">Packing Checklist</h3>
-        <div class="accordion mb-4" id="packingChecklistAccordion">
+        <div class="accordion" id="packingChecklistAccordion">
           {% for category, items in itinerary.packing_checklist.items %}
             <div class="accordion-item">
               <h2 class="accordion-header">
@@ -96,7 +96,11 @@
                         type="button" 
                         data-bs-toggle="collapse" 
                         data-bs-target="#packing{{ forloop.counter }}">
-                  {{ category|title }}
+                  {% if category == 'food_and_water' %}
+                    Food and Water
+                  {% else %}
+                    {{ category|title }}
+                  {% endif %}
                 </button>
               </h2>
               <div id="packing{{ forloop.counter }}" 
