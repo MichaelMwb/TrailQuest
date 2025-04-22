@@ -169,6 +169,7 @@ def trip_preferences_view(request):
                         {{
                             "name": "activity name",
                             "location": "activity location",
+                            "type": "activity type",
                             "description": "activity description",
                             "duration": "duration in hours"
                         }}
@@ -225,7 +226,13 @@ def trip_preferences_view(request):
             for day in itinerary_data['days']:
                 for i in range(len(itinerary_data['days'][day])):
                     # Add a Google Maps link to the location
-                    itinerary_data['days'][day][i]['location'] = "https://www.google.com/maps/search/?api=1&query=" + itinerary_data['days'][day][i]['location'].lower().replace(" ", "+")
+                    print(itinerary_data["days"][day][i]['name'])
+                    print(itinerary_data["days"][day][i]['type']) 
+                    print(itinerary_data["days"][day][i]['location'])  # Debugging log
+                    itinerary_data['days'][day][i]['location'] = "https://www.google.com/maps/search/?api=1&query=" + itinerary_data['days'][day][i]['location'].lower().replace(" ", "+").replace(",", "")
+
+            print ("Itinerary data:", itinerary_data)  # Debugging log
+            # Check if the itinerary data is valid
 
             print("About to save the trip...")
             # Save the trip
