@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container px-5">
+    <h2 class="fw-bold text-success">📝 Saved Plans (Customizable)</h2>
+    <p class="text-muted">Create a draft plan below, make edits, and export it as a PDF. Your changes will not remain after refreshing the page.</p>
+    <hr />
+  {% if trips %}
+    {% for trip in trips %}
+      <div class="card mb-4 saved-trip-card" data-trip-id="{{ trip.id }}">
+        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+            <div>
+              <strong>{{ trip.trip_name }}</strong> — {{ trip.location }}
+            </div>
+            <div class="btn-group" role="group">
+              <button type="button" class="btn btn-sm btn-outline-light download-trip">
+                <i class="bi bi-file-earmark-arrow-down"></i> Export PDF
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-light delete-trip">
+                <i class="bi bi-x-circle"></i> Remove
+              </button>
+            </div>
+          </div>
+        <div class="card-body">
+          {% if trip.itinerary and trip.itinerary.days %}
+          {% for day, activities in trip.itinerary.days.items %}
+          <div class="mb-4 day-section" data-day="{{ day }}">
+            <h5 class="fw-bold mt-3">Day {{ day }}</h5>
+            <div id="day-{{ trip.id }}-{{ day }}-activities">
+              {% for activity in activities %}
+                <div class="d-flex align-items-center mb-1 gap-2">
+                  <input type="text" value="{{ activity.name }}" class="form-control form-control-sm activity-input" placeholder="e.g. Hiking at Rattlesnake">
+                  <button type="button" class="btn btn-sm btn-outline-danger remove-row">✖</button>
+                </div>
+              {% endfor %}
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-secondary add-row mt-2" data-day="{{ day }}" data-trip-id="{{ trip.id }}">+ Add Activity</button>
+          </div>
+        {% endfor %}
+        
+          {% else %}
+            <p class="text-muted">No itinerary found.</p>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="alert alert-info text-center">No saved plans yet.</div>
+  {% endif %}
+</div>
+
+<!-- jsPDF for PDF export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const { jsPDF } = window.jspdf;
+
+  // Save original content
+  document.querySelectorAll(".saved-trip-card").forEach(card => {
+    const tripId = card.dataset.tripId;
+    const state = {};
+    card.querySelectorAll(".day-section").forEach(section => {
+      const day = section.dataset.day;
+      const inputs = section.querySelectorAll("input");
+      state[day] = Array.from(inputs).map(input => input.value);
+    });
+    localStorage.setItem(`trip-${tripId}-original`, JSON.stringify(state));
+    localStorage.setItem(`trip-${tripId}-current`, JSON.stringify(state));
+  });
+
+  const syncTrip = (tripId) => {
+    const card = document.querySelector(`.saved-trip-card[data-trip-id="${tripId}"]`);
+    const state = {};
+    card.querySelectorAll(".day-section").forEach(section => {
+      const day = section.dataset.day;
+      const inputs = section.querySelectorAll("input");
+      state[day] = Array.from(inputs).map(input => input.value);
+    });
+    localStorage.setItem(`trip-${tripId}-current`, JSON.stringify(state));
+  };
+
+  // Add/remove activity inputs
+  document.querySelectorAll(".add-row").forEach(button => {
+    button.addEventListener("click", () => {
+      const day = button.dataset.day;
+      const tripId = button.dataset.tripId;
+      const container = document.getElementById(`day-${tripId}-${day}-activities`);
+      const newRow = document.createElement("div");
+      newRow.className = "input-group mb-2";
+      newRow.innerHTML = `
+        <input type="text" class="form-control activity-input" placeholder="e.g. New Activity">
+        <button type="button" class="btn btn-outline-danger remove-row">✖</button>
+      `;
+      newRow.querySelector(".activity-input").addEventListener("input", () => syncTrip(tripId));
+      newRow.querySelector(".remove-row").addEventListener("click", () => {
+        newRow.remove();
+        syncTrip(tripId);
+      });
+      container.appendChild(newRow);
+      syncTrip(tripId);
+    });
+  });
+
+  document.querySelectorAll(".remove-row").forEach(button => {
+    button.addEventListener("click", () => {
+      const tripId = button.closest(".saved-trip-card").dataset.tripId;
+      button.parentElement.remove();
+      syncTrip(tripId);
+    });
+  });
+
+  // Delete trip from page + localStorage
+document.querySelectorAll(".delete-trip").forEach(button => {
+  button.addEventListener("click", () => {
+    const card = button.closest(".saved-trip-card");
+    const tripId = card.dataset.tripId;
+
+    // Remove localStorage entries
+    localStorage.removeItem(`trip-${tripId}-original`);
+    localStorage.removeItem(`trip-${tripId}-current`);
+
+    // Remove card from DOM
+    card.remove();
+  });
+});
+
+
+  // Reset trip to original
+  document.querySelectorAll(".reset-trip").forEach(button => {
+    button.addEventListener("click", () => {
+      const card = button.closest(".saved-trip-card");
+      const tripId = card.dataset.tripId;
+      const original = JSON.parse(localStorage.getItem(`trip-${tripId}-original`));
+
+      Object.entries(original).forEach(([day, activities]) => {
+        const container = document.getElementById(`day-${tripId}-${day}-activities`);
+        container.innerHTML = "";
+        activities.forEach(name => {
+          const row = document.createElement("div");
+          row.className = "input-group mb-2";
+          row.innerHTML = `
+            <input type="text" class="form-control activity-input" value="${name}" placeholder="e.g. Activity">
+            <button type="button" class="btn btn-outline-danger remove-row">✖</button>
+          `;
+          row.querySelector(".activity-input").addEventListener("input", () => syncTrip(tripId));
+          row.querySelector(".remove-row").addEventListener("click", () => {
+            row.remove();
+            syncTrip(tripId);
+          });
+          container.appendChild(row);
+        });
+      });
+
+      localStorage.setItem(`trip-${tripId}-current`, JSON.stringify(original));
+    });
+  });
+// Helper: Clean and normalize text
+const safeText = (str) =>
+    str.normalize("NFKD").replace(/[^\x20-\x7E]/g, "").trim();
+
+  // === Download Trip as PDF ===
+  document.querySelectorAll(".download-trip").forEach(button => {
+    button.addEventListener("click", () => {
+      const card = button.closest(".saved-trip-card");
+      const tripId = card.dataset.tripId;
+
+      const title = safeText(card.querySelector("strong").innerText);
+      const location = safeText(
+        card.querySelector(".card-header").innerText.split("—")[1]?.trim() || ""
+      );
+
+      const doc = new jsPDF();
+      let y = 10;
+
+      // Header: Title + Location
+      doc.setFontSize(16);
+      doc.text(title, 10, y);
+      y += 10;
+
+      doc.setFontSize(12);
+      doc.text(`Location: ${location}`, 10, y);
+      y += 10;
+
+      // Iterate through each day section
+      card.querySelectorAll(".day-section").forEach(section => {
+        const day = safeText(section.dataset.day);
+        const inputs = section.querySelectorAll("input");
+
+        doc.setFont(undefined, 'bold');
+        doc.text(`Day ${day}`, 10, y);
+        y += 6;
+        doc.setFont(undefined, 'normal');
+
+        inputs.forEach(input => {
+          const value = safeText(input.value);
+          if (value) {
+            doc.text(`- ${value}`, 14, y);
+            y += 6;
+            if (y >= 270) {
+              doc.addPage();
+              y = 10;
+            }
+          }
+        });
+
+        y += 4;
+      });
+
+      const filename = `${title.replace(/\s+/g, "_").toLowerCase()}_plan.pdf`;
+      doc.save(filename);
+    });
+  });
+
+  // === Track Activity Input Changes (Local Sync) ===
+  document.querySelectorAll(".activity-input").forEach(input => {
+    input.addEventListener("input", () => {
+      const tripId = input.closest(".saved-trip-card").dataset.tripId;
+      syncTrip(tripId);
+    });
+  });
+});
+
+// === Restore saved localStorage values on page load ===
+document.querySelectorAll(".saved-trip-card").forEach(card => {
+  const tripId = card.dataset.tripId;
+  const current = localStorage.getItem(`trip-${tripId}-current`);
+
+  if (!current) return;
+
+  const savedData = JSON.parse(current);
+
+  Object.entries(savedData).forEach(([day, activities]) => {
+    const container = document.getElementById(`day-${tripId}-${day}-activities`);
+    if (!container) return;
+
+    // Clear what's there
+    container.innerHTML = "";
+
+    activities.forEach(name => {
+      const row = document.createElement("div");
+      row.className = "input-group mb-2";
+      row.innerHTML = `
+        <input type="text" class="form-control activity-input" value="${name}" placeholder="e.g. Activity">
+        <button type="button" class="btn btn-outline-danger remove-row">✖</button>
+      `;
+      row.querySelector(".activity-input").addEventListener("input", () => syncTrip(tripId));
+      row.querySelector(".remove-row").addEventListener("click", () => {
+        row.remove();
+        syncTrip(tripId);
+      });
+      container.appendChild(row);
+    });
+  });
+});
+
+  
+</script>
+{% endblock %}

@@ -45,6 +45,7 @@ class Trip(models.Model):
     difficulty = models.CharField(max_length=50)
     itinerary = models.TextField(null=True, blank=True)  # Store the itinerary JSON
     completed = models.BooleanField(default=False)  # Mark if the trip is completed
+    visible_in_saved = models.BooleanField(default=True)
 
     def __str__(self):
         return f"Trip - {self.location} ({'Completed' if self.completed else 'Current'})"

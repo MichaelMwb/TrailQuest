@@ -14,6 +14,10 @@ urlpatterns = [
     path('trip/<int:trip_id>/complete/', views.complete_trip, name='complete_trip'),
     path('past-trips/', views.past_trips, name='past_trips'),
     path('trip-suggestions/', views.trip_suggestions, name='trip_suggestions'),
+    path('saved-plans/', views.saved_plans, name='saved_plans'),
+    path('saved-plans/<int:trip_id>/update/', views.update_trip, name='update_trip'),
+    path('saved-plans/<int:trip_id>/delete/', views.delete_trip, name='delete_trip'),
+    path('trip/<int:trip_id>/save/', views.save_trip_to_plans, name='save_trip_to_plans'),
 ]
 
 

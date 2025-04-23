@@ -310,3 +310,124 @@ def trip_suggestions(request):
         'trip': current_trip,
         'itinerary': itinerary
     })
+
+@login_required
+def saved_plans(request):
+    # Show only the trips that were copied (not completed)
+    trips = Trip.objects.filter(user=request.user, completed=False, visible_in_saved=True).order_by('-id')
+
+    # Deserialize itinerary
+    for trip in trips:
+        if trip.itinerary:
+            try:
+                trip.itinerary = json.loads(trip.itinerary)
+            except json.JSONDecodeError:
+                trip.itinerary = None
+
+    return render(request, 'accounts/saved_plans.html', {'trips': trips})
+
+@login_required
+def update_trip(request, trip_id):
+    trip = get_object_or_404(Trip, id=trip_id, user=request.user, completed=False)
+
+    if request.method == 'POST':
+        original_itinerary = json.loads(trip.itinerary)
+        updated_days = {}
+
+        for day_key in original_itinerary.get("days", {}):
+            names = request.POST.getlist(f'day_{day_key}_name')
+
+            updated_activities = []
+            for name in names:
+                if name.strip():
+                    updated_activities.append({
+                        "name": name.strip(),
+                        "location": "",  # Optional: Keep empty or remove this field later
+                        "description": "",
+                        "duration": ""
+                    })
+            updated_days[day_key] = updated_activities
+
+        original_itinerary["days"] = updated_days
+        trip.itinerary = json.dumps(original_itinerary)
+        trip.save()
+        messages.success(request, "Trip updated successfully!")
+
+    return redirect('saved_plans')
+
+@login_required
+def delete_trip(request, trip_id):
+    trip = get_object_or_404(Trip, id=trip_id, user=request.user, completed=False)
+
+    # Soft-hide the trip from Saved Plans view
+    trip.visible_in_saved = False
+    trip.save()
+
+    messages.success(request, "Trip removed from Saved Plans.")
+    return redirect('saved_plans')
+
+
+@login_required
+def copy_to_plans(request, trip_id):
+    if request.method == 'POST':
+        original_trip = get_object_or_404(Trip, id=trip_id, user=request.user)
+
+        # Make a deep copy of the trip but mark it as editable
+        Trip.objects.create(
+            user=request.user,
+            trip_name=f"{original_trip.trip_name} (Copy)",
+            location=original_trip.location,
+            group_size=original_trip.group_size,
+            activity=original_trip.activity,
+            duration=original_trip.duration,
+            difficulty=original_trip.difficulty,
+            itinerary=original_trip.itinerary,
+            completed=False  # Not completed → will appear in Saved Plans
+        )
+
+        messages.success(request, "Trip copied to Saved Plans.")
+        return redirect('past_trips')
+
+
+@login_required
+def save_trip_to_plans(request, trip_id):
+    if request.method == 'POST':
+        original_trip = get_object_or_404(Trip, id=trip_id, user=request.user)
+
+        # Generate a consistent saved name (only add (Saved) once)
+        base_name = original_trip.trip_name
+        if base_name.endswith(" (Saved)"):
+            saved_name = base_name
+        else:
+            saved_name = f"{base_name} (Saved)"
+
+        # Check if this exact saved version already exists
+        already_saved = Trip.objects.filter(
+            user=request.user,
+            trip_name=saved_name,
+            location=original_trip.location,
+            group_size=original_trip.group_size,
+            activity=original_trip.activity,
+            duration=original_trip.duration,
+            difficulty=original_trip.difficulty,
+            itinerary=original_trip.itinerary,
+            completed=False
+        ).exists()
+
+        if already_saved:
+            messages.warning(request, "You've already saved this trip to your plans.")
+        else:
+            Trip.objects.create(
+                user=request.user,
+                trip_name=saved_name,
+                location=original_trip.location,
+                group_size=original_trip.group_size,
+                activity=original_trip.activity,
+                duration=original_trip.duration,
+                difficulty=original_trip.difficulty,
+                itinerary=original_trip.itinerary,
+                completed=False
+            )
+            messages.success(request, "Trip saved to your editable plans.")
+
+        return redirect('trip_suggestions')
