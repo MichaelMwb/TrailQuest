@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load filter %}
 {% block content %}
 <div class="d-flex flex-column" style="min-height: 100vh; background-color: #d0f0f2;"> <!-- Full-height container -->
   <div class="container my-auto"> <!-- Center content vertically -->
@@ -25,30 +26,32 @@
 
                 <!-- Trip Body -->
                 <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse" aria-labelledby="heading{{ forloop.counter }}" data-bs-parent="#pastTripsAccordion">
-                  <div class="accordion-body">
-                    {% if trip.itinerary and trip.itinerary.days %}
-                      <ul class="list-group">
-                        {% for day, activities in trip.itinerary.days.items %}
-                          <li class="list-group-item">
-                            <strong>Day {{ day }}</strong>
-                            <ul>
-                              {% for activity in activities %}
-                                <li>
-                                  <a href="{{ activity.location }}" target="_blank" class="text-decoration-none">
-                                    {{ activity.name }}
-                                  </a>
-                                </li>
-                              {% endfor %}
+                    <div class="accordion-body">
+                        {% if trip.itinerary and trip.itinerary.days %}
+                            <ul class="list-group">
+                                {% for day, activities in trip.itinerary.days.items %}
+                                    <li class="list-group-item">
+                                        <strong>Day {{ day }}</strong>
+                                        <ul>
+                                            {% for activity in activities %}
+                                                <li>
+                                                    {% with result=activity.location|split:"|" %}
+                                                    {{activity.name}} - <a href="{{ result.1 }}" target="_blank" class="text-decoration-none">
+                                                        {{ result.0 }}
+                                                    </a>
+                                                    {% endwith %} 
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </li>
+                                {% endfor %}
                             </ul>
-                          </li>
-                        {% endfor %}
-                      </ul>
-                    {% else %}
-                      <p>No landmarks available for this trip.</p>
-                    {% endif %}
-                  </div>
+                        {% else %}
+                            <p>No landmarks available for this trip.</p>
+                        {% endif %}
+                    </div>
                 </div>
-              </div>
+            </div>
             {% endfor %}
           </div>
         {% else %}

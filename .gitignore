@@ -1,5 +1,5 @@
 # Byte-compiled / optimized / DLL files
-__pycache__/
+__pycache__
 *.py[cod]
 
 # Ignore local dev folders
@@ -7,7 +7,9 @@ local/
 *.pyc
 *.pyc
 *.pyc
-/accounts/__pycache__
 /accounts/migrations/__pycache__
 /accounts/migrations/__pycache__
 /home/__pycache__
+/__pycache__/
+/accounts/__pycache__
+/TRAILQUEST/__pycache__

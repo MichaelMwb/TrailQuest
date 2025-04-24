@@ -174,7 +174,9 @@ def trip_preferences_view(request):
                         }}
                     ]
                 }}
-            }}"""
+            }}
+            In the JSON response, make sure that the location is a real place that can be queried by Google Maps, and I can get directions to.
+            """
 
             # Call OpenAI API
             try:
@@ -225,7 +227,7 @@ def trip_preferences_view(request):
             for day in itinerary_data['days']:
                 for i in range(len(itinerary_data['days'][day])):
                     # Add a Google Maps link to the location
-                    itinerary_data['days'][day][i]['location'] = "https://www.google.com/maps/search/?api=1&query=" + itinerary_data['days'][day][i]['location'].lower().replace(" ", "+")
+                    itinerary_data['days'][day][i]['location'] = itinerary_data['days'][day][i]['location'] + "|https://www.google.com/maps/search/?api=1&query=" + itinerary_data['days'][day][i]['location'].lower().replace(" ", "+")
 
             print("About to save the trip...")
             # Save the trip
