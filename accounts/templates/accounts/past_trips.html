@@ -23,7 +23,7 @@
                             </h2>
 
                             <!-- Trip Body -->
-                            <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse" aria-labelledby="heading{{ forloop.counter }}" >
+                            <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse" aria-labelledby="heading{{ forloop.counter }}" data-bs-parent="#pastTripsAccordion">
                                 <div class="accordion-body">
                                     {% if trip.itinerary and trip.itinerary.days %}
                                         <ul class="list-group">
