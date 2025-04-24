@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
 {% load static %}
-<div class="py-5" style="background-color: #d0f0f2;">
+<div class="py-5" style="background-color: #d0f0f2; height: 100vh; width: 100vw;">
   <div class="container">
     <div class="row justify-content-center align-items-center">
       <div class="col-lg-6">
@@ -32,9 +32,9 @@
       </div>
       <div class="col-lg-6 d-none d-lg-flex align-items-center justify-content-center">
         <div class="text-center">
-          <img src="{% static 'img/logomain.png' %}" alt="TrailQuest logo" class="img-fluid rounded mb-3", style="max-width: 300px;" />
+          <img src="{% static 'img/logomain.png' %}" alt="TrailQuest logo" class="img-fluid rounded mb-3" style="max-width: 500px; width: 100%; height: auto;">
           <blockquote class="blockquote text-dark">
-            <p>“Every explorer starts with a first step.”</p>
+            <p class="fw-semibold fs-5 text-dark">Every trail has a story. Start yours today.</p>
           </blockquote>
         </div>
       </div>

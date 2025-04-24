@@ -4,11 +4,11 @@
 <div class="container mt-5">
   <div class="row justify-content-center">
     <div class="col-md-8">
-      <div class="card shadow-sm">
-        <div class="card-header bg-info text-white">
+      <div class="card shadow-lg">
+        <div class="card-header text-white" style="background-color: #f5931a;">
           <h2 class="mb-0">Plan Your TrailQuest Trip</h2>
         </div>
-        <div class="card-body">
+        <div class="card-body p-4">
           {% if messages %}
             <div class="alert alert-info">
                 {% for message in messages %}
@@ -23,12 +23,16 @@
                 {{ field.label_tag }}
                 {% if field.name == "location" %}
                   <!-- Add an ID to the location field for JavaScript targeting -->
-                  {{ field }}
+                  <div class="mb-3">
+                    {{ field }}
+                  </div>
                   <div id="location-error" class="text-danger small" style="display: none;">
                     Please select a valid city from the dropdown.
                   </div>
                 {% else %}
-                  {{ field }}
+                  <div class="mb-3">
+                    {{ field }}
+                  </div>
                 {% endif %}
                 {% if field.errors %}
                   <div class="text-danger small">
@@ -37,7 +41,7 @@
                 {% endif %}
               </div>
             {% endfor %}
-            <button type="submit" class="btn btn-primary mt-3" id="submit-button">Generate Trip Plan</button>
+            <button type="submit" class="btn mt-3" style="background-color: #f5931a; color: white;">Generate Trip Plan</button>
           </form>
 
           <!-- Spinner -->
