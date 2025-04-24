@@ -59,126 +59,127 @@
   }
 </style>
 
-<div class="container mt-5">
-  {% if itinerary %}
-    <div class="card shadow-lg">
-      <div class="card-header bg-success text-white">
-        <h2 class="card-title mb-0">{{ itinerary.name }}</h2>
-      </div>
-      <div class="card-body">
-        <!-- Trip Details -->
-        <h3 class="mb-3">Trip Details</h3>
-        <ul class="list-group list-group-flush mb-4">
-          <li class="list-group-item">
-            <strong>Location:</strong> {{ itinerary.location }}
-          </li>
-          <li class="list-group-item">
-            <strong>Difficulty:</strong> {{ itinerary.difficulty }}
-          </li>
-          <li class="list-group-item">
-            <strong>Duration:</strong> {{ trip.duration }} days
-          </li>
-          <li class="list-group-item">
-            <strong>Activity Type:</strong> {{ trip.activity }}
-          </li>
-          <li class="list-group-item">
-            <strong>Group Size:</strong> {{ trip.group_size }}
-          </li>
-        </ul>
+<div class="d-flex flex-column" style="min-height: 100vh; background-color: #d0f0f2;"> <!-- Full-height container -->
+  <div class="container my-auto"> <!-- Center content vertically -->
+    {% if itinerary %}
+      <div class="card shadow-lg">
+        <div class="card-header bg-success text-white">
+          <h2 class="card-title mb-0">{{ itinerary.name }}</h2>
+        </div>
+        <div class="card-body">
+          <!-- Trip Details -->
+          <h3 class="mb-3">Trip Details</h3>
+          <ul class="list-group list-group-flush mb-4">
+            <li class="list-group-item">
+              <strong>Location:</strong> {{ itinerary.location }}
+            </li>
+            <li class="list-group-item">
+              <strong>Difficulty:</strong> {{ itinerary.difficulty }}
+            </li>
+            <li class="list-group-item">
+              <strong>Duration:</strong> {{ trip.duration }} days
+            </li>
+            <li class="list-group-item">
+              <strong>Activity Type:</strong> {{ trip.activity }}
+            </li>
+            <li class="list-group-item">
+              <strong>Group Size:</strong> {{ trip.group_size }}
+            </li>
+          </ul>
 
-        <!-- Packing Checklist -->
-        <h3 class="mb-3">Packing Checklist</h3>
-        <div class="accordion" id="packingChecklistAccordion">
-          {% for category, items in itinerary.packing_checklist.items %}
-            <div class="accordion-item">
-              <h2 class="accordion-header">
-                <button class="accordion-button collapsed" 
-                        type="button" 
-                        data-bs-toggle="collapse" 
-                        data-bs-target="#packing{{ forloop.counter }}">
-                  {% if category == 'food_and_water' %}
-                    Food and Water
-                  {% else %}
-                    {{ category|title }}
-                  {% endif %}
-                </button>
-              </h2>
-              <div id="packing{{ forloop.counter }}" 
-                   class="accordion-collapse collapse">
-                <div class="accordion-body">
-                  <ul class="list-group list-group-flush">
-                    {% for item in items %}
-                      <li class="list-group-item">
-                        <div class="form-check">
-                          <input class="form-check-input" type="checkbox" id="item{{ forloop.parentloop.counter }}{{ forloop.counter }}">
-                          <label class="form-check-label" for="item{{ forloop.parentloop.counter }}{{ forloop.counter }}">
-                            {{ item }}
-                          </label>
+          <!-- Packing Checklist -->
+          <h3 class="mb-3">Packing Checklist</h3>
+          <div class="accordion" id="packingChecklistAccordion">
+            {% for category, items in itinerary.packing_checklist.items %}
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" 
+                          type="button" 
+                          data-bs-toggle="collapse" 
+                          data-bs-target="#packing{{ forloop.counter }}">
+                    {% if category == 'food_and_water' %}
+                      Food and Water
+                    {% else %}
+                      {{ category|title }}
+                    {% endif %}
+                  </button>
+                </h2>
+                <div id="packing{{ forloop.counter }}" 
+                     class="accordion-collapse collapse">
+                  <div class="accordion-body">
+                    <ul class="list-group list-group-flush">
+                      {% for item in items %}
+                        <li class="list-group-item">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="item{{ forloop.parentloop.counter }}{{ forloop.counter }}">
+                            <label class="form-check-label" for="item{{ forloop.parentloop.counter }}{{ forloop.counter }}">
+                              {{ item }}
+                            </label>
+                          </div>
+                        </li>
+                      {% endfor %}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+
+          <!-- Daily Itinerary -->
+          <h3 class="mb-3">Daily Activities</h3>
+          <div class="accordion" id="itineraryAccordion">
+            {% for day_number, activities in itinerary.days.items %}
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button" 
+                          type="button" 
+                          data-bs-toggle="collapse" 
+                          data-bs-target="#day{{ day_number }}">
+                    Day {{ day_number }}
+                  </button>
+                </h2>
+                <div id="day{{ day_number }}" 
+                     class="accordion-collapse collapse {% if forloop.first %}show{% endif %}">
+                  <div class="accordion-body">
+                    {% for activity in activities %}
+                      <div class="card mb-3">
+                        <div class="card-body">
+                          <h5 class="card-title"> <a href= {{activity.location}} target="_blank"> {{activity.name}} </a> </h5>
+                          <p class="card-text">{{ activity.description }}</p>
+                          <p class="card-text">
+                            <small class="text-muted">Duration: {{ activity.duration }}</small>
+                          </p>
                         </div>
-                      </li>
-                    {% endfor %}
-                  </ul>
-                </div>
-              </div>
-            </div>
-          {% endfor %}
-        </div>
-
-        <!-- Daily Itinerary -->
-        <h3 class="mb-3">Daily Activities</h3>
-        <div class="accordion" id="itineraryAccordion">
-          {% for day_number, activities in itinerary.days.items %}
-            <div class="accordion-item">
-              <h2 class="accordion-header">
-                <button class="accordion-button" 
-                        type="button" 
-                        data-bs-toggle="collapse" 
-                        data-bs-target="#day{{ day_number }}">
-                  Day {{ day_number }}
-                </button>
-              </h2>
-              <div id="day{{ day_number }}" 
-                   class="accordion-collapse collapse {% if forloop.first %}show{% endif %}">
-                <div class="accordion-body">
-                  {% for activity in activities %}
-                    <div class="card mb-3">
-                      <div class="card-body">
-                        <h5 class="card-title"> <a href= {{activity.location}} target="_blank"> {{activity.name}} </a> </h5>
-                        <p class="card-text">{{ activity.description }}</p>
-                        <p class="card-text">
-                          <small class="text-muted">Duration: {{ activity.duration }}</small>
-                        </p>
                       </div>
-                    </div>
-                  {% endfor %}
+                    {% endfor %}
+                  </div>
                 </div>
               </div>
-            </div>
-          {% endfor %}
-        </div>
+            {% endfor %}
+          </div>
 
-        <div class="d-flex justify-content-between mt-4">
-          <!-- Print Itinerary Button on the Left -->
-          <button class="btn btn-primary" onclick="window.print()">Print Itinerary</button>
+          <div class="d-flex justify-content-between mt-4">
+            <!-- Print Itinerary Button on the Left -->
+            <button class="btn btn-primary" onclick="window.print()">Print Itinerary</button>
 
-          <!-- Mark as Completed Button in the Center -->
-          <form method="POST" action="{% url 'complete_trip' trip.id %}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-success mx-3">Mark as Completed</button>
-          </form>
+            <!-- Mark as Completed Button in the Center -->
+            <form method="POST" action="{% url 'complete_trip' trip.id %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-success mx-3">Mark as Completed</button>
+            </form>
 
-          <!-- Plan Another Trip Button on the Right -->
-          <a href="{% url 'trip_preferences' %}" class="btn btn-secondary">Plan Another Trip</a>
+            <!-- Plan Another Trip Button on the Right -->
+            <a href="{% url 'trip_preferences' %}" class="btn btn-secondary">Plan Another Trip</a>
+          </div>
         </div>
       </div>
-    </div>
-  {% else %}
-    <!-- Message when no current itinerary exists -->
-    <div class="alert alert-warning text-center">
-      <p>No current itinerary found. Plan your next trip to get started!</p>
-      <a href="{% url 'trip_preferences' %}" class="btn btn-primary mt-3">Plan a Trip</a>
-    </div>
-  {% endif %}
+    {% else %}
+      <!-- Message when no current itinerary exists -->
+      <div class="alert alert-warning text-center">
+        <p>No current itinerary found. Plan your next trip to get started!</p>
+        <a href="{% url 'trip_preferences' %}" class="btn btn-primary mt-3">Plan a Trip</a>
+      </div>
+    {% endif %}
+  </div>
 </div>
-
 {% endblock %}
