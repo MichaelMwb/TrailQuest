@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static filter %}
 {% block content %}
 <style>
   .accordion-button {
@@ -143,7 +143,10 @@
                   {% for activity in activities %}
                     <div class="card mb-3">
                       <div class="card-body">
-                        <h5 class="card-title"> <a href= {{activity.location}} target="_blank"> {{activity.name}} </a> </h5>
+                        <h5 class="card-title"> {{activity.name}}</h5>
+                        {% with result=activity.location|split:"|" %}
+                        <p class="card-text"><a href="{{result.1}}" target="_blank"> {{ result.0 }} </a></p>
+                        {% endwith %}
                         <p class="card-text">{{ activity.description }}</p>
                         <p class="card-text">
                           <small class="text-muted">Duration: {{ activity.duration }}</small>

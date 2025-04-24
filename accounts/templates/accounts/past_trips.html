@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load filter %}
 {% block content %}
 <div class="p-3 px-5">
     <div class="row mt-3">
@@ -33,9 +34,11 @@
                                                     <ul>
                                                         {% for activity in activities %}
                                                             <li>
-                                                                <a href="{{ activity.location }}" target="_blank" class="text-decoration-none">
-                                                                    {{ activity.name }}
+                                                                {% with result=activity.location|split:"|" %}
+                                                                {{activity.name}} - <a href="{{ result.1 }}" target="_blank" class="text-decoration-none">
+                                                                    {{ result.0 }}
                                                                 </a>
+                                                                {% endwith %} 
                                                             </li>
                                                         {% endfor %}
                                                     </ul>
