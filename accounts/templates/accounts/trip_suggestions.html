@@ -451,14 +451,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // --- Handle Add Suggestion --- 
             if (target.classList.contains('add-suggestion-btn')) {
-                 console.log('Add button clicked.', target); // Log add button clicks too
+                 console.log('Add button clicked.', target);
+                 
+                 // --- Stop if button is already disabled --- 
+                 if (target.disabled) {
+                     console.log('Button already disabled, ignoring click.');
+                     return;
+                 }
+                 // ----------------------------------------
+
                  const suggestionIndex = parseInt(target.dataset.suggestionIndex, 10);
                  console.log(`Attempting to add suggestion index: ${suggestionIndex}`);
+                 const suggestionCard = target.closest('.suggestion-card'); // Get the card early
                 
-                if (isNaN(suggestionIndex)) {
-                    console.error('Invalid suggestion index for adding');
+                if (isNaN(suggestionIndex) || !suggestionCard) { // Check validity early
+                    console.error('Invalid suggestion index or card not found');
                     return;
                 }
+
+                // --- Disable button immediately to prevent double clicks --- 
+                target.disabled = true;
+                target.textContent = 'Adding...'; // Optional: Indicate processing
+                // ----------------------------------------------------------
                 
                 const url = `/trip/${tripId}/day/${day}/add/${suggestionIndex}/`;
 
@@ -496,27 +510,42 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         // --- MOVE THE SUGGESTION --- 
                         // Remove the suggestion card from the DOM
-                        const suggestionCard = target.closest('.suggestion-card');
                         suggestionCard.remove(); 
                         
                         // Check if suggestions column is now empty and add placeholder
                         const suggestionsColumn = dayRow.querySelector('.suggestions-column');
                         addSuggestionPlaceholderIfNeeded(suggestionsColumn);
-                        // --------------------------
                         
-                        // Disable original button (already done, but keep for clarity)
+                        // --- Re-index remaining suggestions --- 
+                        const remainingSuggestionCards = suggestionsColumn.querySelectorAll('.suggestion-card');
+                        remainingSuggestionCards.forEach((card, newIndex) => {
+                            card.dataset.suggestionIndex = newIndex;
+                            const button = card.querySelector('.add-suggestion-btn');
+                            if (button) button.dataset.suggestionIndex = newIndex;
+                        });
+                        // -----------------------------------
+
+                        // Disable original button
                         target.disabled = true;
-                        target.textContent = 'Added';
+                        target.textContent = 'Added'; // Keep final text on success
                         target.classList.remove('btn-outline-success');
                         target.classList.add('btn-success');
                     } else {
                         console.error('Error adding activity:', data.message);
                         alert('Error: ' + data.message);
+                         // --- Re-enable button on failure --- 
+                        target.disabled = false;
+                        target.textContent = 'Add this activity';
+                         // ---------------------------------
                     }
                 })
                 .catch(error => {
                     console.error('Fetch error:', error);
                     alert('An error occurred while adding the activity: ' + error.message);
+                     // --- Re-enable button on fetch error --- 
+                    target.disabled = false;
+                    target.textContent = 'Add this activity';
+                     // -------------------------------------
                 });
             }
         });
