@@ -146,7 +146,7 @@
                         <div class="card-body">
                           <h5 class="card-title"> {{activity.name}}</h5>
                           {% with result=activity.location|split:"|" %}
-                            {% if result.0 == "No results found" or result.0 == "N/A" %}
+                            {% if result.0 == "No results found" or result.0 == "N/A" %} 
                               <p class="card-text">No results found for this location.</p>
                             {% else %}
                               <p class="card-text"><a href="{{result.1}}" target="_blank"> {{ result.0 }} </a></p>

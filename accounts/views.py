@@ -176,7 +176,7 @@ def trip_preferences_view(request):
                     ]
                 }}
             }}
-            In the JSON response, make sure that the location is a real place that can be queried by Google Maps, and I can get directions to.
+            In the JSON response, make sure that the location is a real place that can be queried by Google Maps, and I can get directions to. Set the location to N/A if the location is not available.
             """
 
             # Call OpenAI API
@@ -272,7 +272,8 @@ def trip_preferences_view(request):
                     ]
                 }}
             }}
-            In the JSON response, make sure that the location is a real place that can be queried by Google Maps, and I can get directions to.
+            In the JSON response, make sure that the location is a real place that can be queried by Google Maps, and I can get directions to. Set the location to N/A if the location is not available.
+            Please do not repeat the trip itinerary content in previous output.
             """
 
             # Call OpenAI API

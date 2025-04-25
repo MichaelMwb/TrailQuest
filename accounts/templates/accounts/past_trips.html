@@ -36,9 +36,14 @@
                                             {% for activity in activities %}
                                                 <li>
                                                     {% with result=activity.location|split:"|" %}
-                                                    {{activity.name}} - <a href="{{ result.1 }}" target="_blank" class="text-decoration-none">
+                                                    {% if result.0 == "No results found" or result.0 == "N/A" %} 
+                                                      {{activity.name}}
+                                                    {% else %}
+                                                      {{activity.name}}<a href="{{result.1}}" target="_blank" class="text-decoration-none"> 
                                                         {{ result.0 }}
-                                                    </a>
+                                                      </a>
+                                                      <!-- Display the location link -->
+                                                    {% endif %}
                                                     {% endwith %} 
                                                 </li>
                                             {% endfor %}
