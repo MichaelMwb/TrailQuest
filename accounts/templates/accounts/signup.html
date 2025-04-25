@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block content %}
-<div class="py-5" style="background-color: #d0f0f2;">
-  <div class="container">
+<div class="d-flex flex-column" style="min-height: 100vh; background-color: #d0f0f2;"> <!-- Flexbox container -->
+  <div class="container my-auto"> <!-- Center content vertically -->
     <div class="row justify-content-center align-items-center">
       <div class="col-lg-6">
         <div class="card shadow-lg rounded border-0 p-4">
@@ -78,7 +78,7 @@
 
       <!-- Right image + quote block -->
       <div class="col-lg-6 d-none d-lg-flex align-items-center justify-content-center">
-        <div class="text-center" style="margin-top: -150px;">
+        <div class="text-center">
           <img src="{% static 'img/logomain.png' %}" alt="TrailQuest logo" class="img-fluid rounded mb-3" style="max-width: 500px; width: 100%; height: auto;">
           <blockquote class="blockquote text-dark">
             <p class="fw-semibold fs-5 text-dark">Every trail has a story. Start yours today.</p>
