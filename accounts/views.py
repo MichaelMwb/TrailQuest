@@ -121,21 +121,22 @@ def reset_password(request):
 
     return render(request, "accounts/reset_password.html", {"form": form})
 
-from django.shortcuts import render, redirect
-from .forms import TripPreferencesForm
-from .models import TripPreferences, Trip
-from openai import OpenAI
-import json
-from openai import Timeout
-import logging
-
-logger = logging.getLogger(__name__)
+import os
+from django.conf import settings
+from django.utils.safestring import mark_safe
 
 @login_required
 def trip_preferences_view(request):
     client = OpenAI(
         api_key=OPENAI_API_KEY
     )
+
+    # Fetch images from the static/background/ folder
+    background_folder = os.path.join(settings.STATICFILES_DIRS[0], 'background')
+    images = [
+        f"background/{file}" for file in os.listdir(background_folder)
+        if file.endswith(('.jpg', '.jpeg'))
+    ]
 
     if request.method == 'POST':
         form = TripPreferencesForm(request.POST)
@@ -192,11 +193,11 @@ def trip_preferences_view(request):
                 return redirect('trip_preferences')
 
             # Debugging: Log the response
-            logger.debug("OpenAI API Response: %s", response)
+           # logger.debug("OpenAI API Response: %s", response)
 
             # Extract and clean the response content
             raw_content = response.choices[0].message.content
-            logger.debug("Raw Response Content: %s", raw_content)
+           # logger.debug("Raw Response Content: %s", raw_content)
 
             # Improved cleaning logic
             if "```json" in raw_content:
@@ -206,11 +207,11 @@ def trip_preferences_view(request):
             else:
                 cleaned_content = raw_content.strip()
 
-            logger.debug("Cleaned Content: %s", cleaned_content)
+           # logger.debug("Cleaned Content: %s", cleaned_content)
 
             # Validate the cleaned content
             if not cleaned_content.startswith("{") or not cleaned_content.endswith("}"):
-                logger.error("Invalid JSON Format: %s", cleaned_content)
+               # logger.error("Invalid JSON Format: %s", cleaned_content)
                 messages.error(request, "The OpenAI API returned an invalid itinerary format. Please try again.")
                 return redirect('trip_preferences')
 
@@ -241,13 +242,15 @@ def trip_preferences_view(request):
                 completed=False  # Mark as not completed
             )
 
-            logger.debug("Trip saved successfully. Redirecting to trip suggestions...")  # Debugging log
+            #logger.debug("Trip saved successfully. Redirecting to trip suggestions...")  # Debugging log
             return redirect('trip_suggestions')
 
     else:
         form = TripPreferencesForm()
 
-    return render(request, 'accounts/trip_preferences.html', {'form': form})
+    # Pass the images and form to the template
+    return render(request, 'accounts/trip_preferences.html', {'form': form, 
+                                                              'images_json': mark_safe(json.dumps(images)),  'images': images})
 
 from django.shortcuts import render
 from .models import Trip
