@@ -123,7 +123,7 @@ def reset_password(request):
 
 from django.shortcuts import render, redirect
 from .forms import TripPreferencesForm
-from .models import TripPreferences, Trip
+from .models import TripPreferences, Trip, Suggestion
 from openai import OpenAI
 import json
 from openai import Timeout
@@ -227,6 +227,7 @@ def trip_preferences_view(request):
 
             for day in itinerary_data['days']:
                 for i in range(len(itinerary_data['days'][day])):
+                    print(itinerary_data['days'][day][i]['name'])
                     # Add a Google Maps link to the location
                     itinerary_data['days'][day][i]['location'] = itinerary_data['days'][day][i]['location'] + "|https://www.google.com/maps/search/?api=1&query=" + itinerary_data['days'][day][i]['location'].lower().replace(" ", "+")
 
@@ -242,6 +243,99 @@ def trip_preferences_view(request):
                 difficulty=cd['difficulty'],
                 itinerary=json.dumps(itinerary_data),  # Save the itinerary JSON
                 completed=False  # Mark as not completed
+            )
+
+            # Delete any existing suggestions for the user
+            Suggestion.objects.filter(user=request.user).delete()
+
+            # Construct the suggestions prompt
+            suggestions_prompt = f"""Create a detailed itinerary for one more day in {cd['location']} without repeating the trip itinerary content in previous output.
+            Trip name: {cd['trip_name']}
+            Activity type: {cd['activities']}
+            Difficulty level: {cd['difficulty']}
+            Group size: {cd['group_size']}
+            
+            Please provide a detailed suggestion for new activities without repeating the trip itinerary content in previous output in the following JSON format:
+            {{
+                "name": "trip name",
+                "location": "location name",
+                "difficulty": "easy/medium/hard",
+                "suggestions": {{
+                    "1": [
+                        {{
+                            "name": "activity name",
+                            "location": "activity location",
+                            "type": "activity type",
+                            "description": "activity description",
+                            "duration": "duration in hours"
+                        }}
+                    ]
+                }}
+            }}
+            In the JSON response, make sure that the location is a real place that can be queried by Google Maps, and I can get directions to.
+            """
+
+            # Call OpenAI API
+            try:
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": "You are an expert trail and camping trip planner."},
+                        {"role": "user", "content": suggestions_prompt}
+                    ],
+                    timeout=60  # Increase timeout to 60 seconds
+                )
+            except Timeout as e:
+                print("OpenAI API Timeout:", e)
+                messages.error(request, "The request to the OpenAI API timed out. Please try again.")
+                return redirect('trip_preferences')
+
+            # Debugging: Log the response
+            logger.debug("OpenAI API Response: %s", response)
+
+            # Extract and clean the response content
+            raw_content = response.choices[0].message.content
+            logger.debug("Raw Response Content: %s", raw_content)
+
+            # Improved cleaning logic
+            if "```json" in raw_content:
+                cleaned_content = raw_content.split("```json")[1].split("```")[0].strip()
+            elif "```" in raw_content:
+                cleaned_content = raw_content.split("```")[1].split("```")[0].strip()
+            else:
+                cleaned_content = raw_content.strip()
+
+            logger.debug("Cleaned Content: %s", cleaned_content)
+
+            # Validate the cleaned content
+            if not cleaned_content.startswith("{") or not cleaned_content.endswith("}"):
+                logger.error("Invalid JSON Format: %s", cleaned_content)
+                messages.error(request, "The OpenAI API returned an invalid itinerary format. Please try again.")
+                return redirect('trip_preferences')
+
+            # Attempt to parse the cleaned content
+            try:
+                suggestions_data = json.loads(cleaned_content)
+            except json.JSONDecodeError as e:
+                print("JSONDecodeError:", e)
+                messages.error(request, "Failed to parse the itinerary. Please try again.")
+                return redirect('trip_preferences')
+
+            for key, activities in suggestions_data['suggestions'].items():
+                for activity in activities:
+                    print(activity["name"])
+                    activity['location'] = activity['location'] + "|https://www.google.com/maps/search/?api=1&query=" + activity['location'].lower().replace(" ", "+")
+
+            print("About to save the suggestions...")
+            # Save the trip
+            Suggestion.objects.create(
+                user=request.user,
+                trip_name=cd['trip_name'] if cd['trip_name'] else "Untitled Trip",
+                location=cd['location'],
+                group_size=cd['group_size'],
+                activity=cd['activities'],
+                difficulty=cd['difficulty'],
+                itinerary=json.dumps(suggestions_data)  # Save the itinerary JSON
             )
 
             logger.debug("Trip saved successfully. Redirecting to trip suggestions...")  # Debugging log
