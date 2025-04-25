@@ -169,7 +169,11 @@
                                     </button>
                                   </div>
                                   {% with result=activity.location|split:"|" %}
-                                  <p class="card-text activity-location"><a href="{{ result.1 }}" target="_blank">{{ result.0 }}</a></p>
+                                  {% if result.0 == "No results found" or result.0 == "N/A" %} 
+                                    <p class="card-text activity-location">Location not available</p>
+                                  {% else %}
+                                    <p class="card-text activity-location"><a href="{{ result.1 }}" target="_blank">{{ result.0 }}</a></p>
+                                  {% endif %}
                                   {% endwith %}
                                   <p class="card-text activity-description">{{ activity.description }}</p>
                                   <p class="card-text">

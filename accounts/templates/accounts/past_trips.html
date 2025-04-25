@@ -29,11 +29,11 @@
                     <div class="accordion-body">
                         {% if trip.itinerary and trip.itinerary.days %}
                             <ul class="list-group">
-                                {% for day, activities in trip.itinerary.days.items %}
+                                {% for day_number, day_data in trip.itinerary.days.items %}
                                     <li class="list-group-item">
-                                        <strong>Day {{ day }}</strong>
+                                        <strong>Day {{ day_number }}</strong>
                                         <ul>
-                                            {% for activity in activities %}
+                                            {% for activity in day_data.activities %}
                                                 <li>
                                                     {% with result=activity.location|split:"|" %}
                                                     {% if result.0 == "No results found" or result.0 == "N/A" %} 
