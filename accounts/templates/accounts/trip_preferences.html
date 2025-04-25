@@ -1,135 +1,226 @@
 {% extends "base.html" %}
 {% load static %}
 {% block content %}
-<div class="py-5" style="background-color: #d0f0f2;">
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-md-8">
-        <div class="card shadow-lg">
-          <div class="card-header text-white" style="background-color: #f5931a;">
-            <h2 class="mb-0">Plan Your TrailQuest Trip</h2>
-          </div>
-          <div class="card-body p-4">
-            {% if messages %}
-              <div class="alert alert-info">
-                  {% for message in messages %}
-                      {{ message }}
-                  {% endfor %}
-              </div>
-            {% endif %}
-            <form method="POST" id="trip-form">
-              {% csrf_token %}
-              {% for field in form %}
-                <div class="form-group">
-                  {{ field.label_tag }}
-                  {% if field.name == "location" %}
-                    <!-- Add an ID to the location field for JavaScript targeting -->
-                    <div class="mb-3">
-                      {{ field }}
-                    </div>
-                    <div id="location-error" class="text-danger small" style="display: none;">
-                      Please select a valid city from the dropdown.
-                    </div>
-                  {% else %}
-                    <div class="mb-3">
-                      {{ field }}
-                    </div>
-                  {% endif %}
-                  {% if field.errors %}
-                    <div class="text-danger small">
-                      {{ field.errors }}
-                    </div>
-                  {% endif %}
-                </div>
-              {% endfor %}
-              <button type="submit" id="submit-button" class="btn mt-3 w-100" style="background-color: #f5931a; color: white;">Generate Trip Plan</button>
-            </form>
+<div style="background-color: #d0f0f2; display: flex; flex-direction: column; min-height: 100vh; margin: 0;">
 
-            <!-- Spinner -->
-            <div id="loading-indicator" style="display: none; text-align: center; margin-top: 20px;">
-              <div class="spinner"></div>
-              <p>Generating your itinerary... Please wait.</p>
+  <!-- Background Grid -->
+  <div class="image-grid" id="image-grid"></div>
+    <!-- Main Content -->
+    <div class="d-flex flex-column justify-content-center main-content">
+      <div class="container my-3">
+        <div class="row justify-content-center">
+          <div class="col-md-8">
+            <div class="card shadow-lg">
+              <div class="card-header text-white" style="background-color: #f5931a;">
+                <h2 class="mb-0">Plan Your TrailQuest Trip</h2>
+              </div>
+              <div class="card-body p-4">
+                {% if messages %}
+                  <div class="alert alert-info">
+                    {% for message in messages %}
+                      {{ message }}
+                    {% endfor %}
+                  </div>
+                {% endif %}
+                <form method="POST" id="trip-form">
+                  {% csrf_token %}
+                  {% for field in form %}
+                    <div class="form-group">
+                      {{ field.label_tag }}
+                      {% if field.name == "location" %}
+                        <div class="mb-3">
+                          {{ field }}
+                        </div>
+                        <div id="location-error" class="text-danger small" style="display: none;">
+                          Please select a valid city from the dropdown.
+                        </div>
+                      {% else %}
+                        <div class="mb-3">
+                          {{ field }}
+                        </div>
+                      {% endif %}
+                      {% if field.errors %}
+                        <div class="text-danger small">
+                          {{ field.errors }}
+                        </div>
+                      {% endif %}
+                    </div>
+                  {% endfor %}
+                  <button type="submit" id="submit-button" class="btn mt-3 w-100" style="background-color: #f5931a; color: white;">Generate Trip Plan</button>
+                </form>
+  
+                <!-- Spinner -->
+                <div id="loading-indicator" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; z-index: 1000;">
+                  <div class="spinner-border" style="color: #f5931a; width: 3rem; height: 3rem;" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                  <p style="color: #f5931a;">Generating your itinerary... Please wait.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-</div>
+  <!-- Include Google Places API -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyANVv0AL0Z8nFUl2ZwM54k6ftxMUAC4CXg&libraries=places"></script>
+  <script>
+    function initAutocomplete() {
+      const locationInput = document.getElementById('id_location'); // Target the location field
+      const locationError = document.getElementById('location-error'); // Error message element
+      let isValidLocation = false; // Flag to track if a valid city is selected
 
-<!-- Include Google Places API -->
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyANVv0AL0Z8nFUl2ZwM54k6ftxMUAC4CXg&libraries=places"></script>
-<script>
-  function initAutocomplete() {
-    const locationInput = document.getElementById('id_location'); // Target the location field
-    const locationError = document.getElementById('location-error'); // Error message element
-    let isValidLocation = false; // Flag to track if a valid city is selected
+      // Initialize Google Places Autocomplete
+      const autocomplete = new google.maps.places.Autocomplete(locationInput, {
+        types: ['(cities)'], // Restrict to cities only
+      });
 
-    // Initialize Google Places Autocomplete
-    const autocomplete = new google.maps.places.Autocomplete(locationInput, {
-      types: ['(cities)'], // Restrict to cities only
-    });
+      // Handle place selection
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (place && place.formatted_address) {
+          isValidLocation = true; // Mark as valid if a city is selected
+          locationError.style.display = 'none'; // Hide error message
+        }
+      });
 
-    // Handle place selection
-    autocomplete.addListener('place_changed', () => {
-      const place = autocomplete.getPlace();
-      if (place && place.formatted_address) {
-        isValidLocation = true; // Mark as valid if a city is selected
-        locationError.style.display = 'none'; // Hide error message
-      }
-    });
+      // Clear the flag if the user types manually
+      locationInput.addEventListener('input', () => {
+        isValidLocation = false; // Reset the flag if the user types
+      });
 
-    // Clear the flag if the user types manually
-    locationInput.addEventListener('input', () => {
-      isValidLocation = false; // Reset the flag if the user types
-    });
+      // Validate the form on submission
+      const form = document.getElementById('trip-form');
+      form.addEventListener('submit', (e) => {
+        if (!isValidLocation) {
+          e.preventDefault(); // Prevent form submission
+          locationError.style.display = 'block'; // Show error message
+          locationInput.focus(); // Focus the location field
+        }
+      });
+    }
 
-    // Validate the form on submission
+    // Initialize autocomplete when the page loads
+    document.addEventListener('DOMContentLoaded', initAutocomplete);
+
+    // Show spinner on form submission
     const form = document.getElementById('trip-form');
-    form.addEventListener('submit', (e) => {
-      if (!isValidLocation) {
-        e.preventDefault(); // Prevent form submission
-        locationError.style.display = 'block'; // Show error message
-        locationInput.focus(); // Focus the location field
-      }
+    const submitButton = document.getElementById('submit-button');
+    const loadingIndicator = document.getElementById('loading-indicator');
+
+    form.addEventListener('submit', function() {
+      submitButton.disabled = true; // Disable the submit button
+      loadingIndicator.style.display = 'block'; // Show the spinner
     });
+  </script>
+  <style>
+    /* Background Grid Styles */
+  .image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Adjust size as needed */
+    gap: 1px; /* Space between images */
+    position: absolute; /* Allow the grid to scroll with the page */
+    top: 70px; /* Start below the header */
+    left: 0;
+    width: 100%;
+    height: calc(100vh - 240px); /* Subtract header (70px) and footer (170px) height */
+    z-index: 0;
+    overflow: hidden; /* Prevent extra rows from being displayed */
+    min-width: 600px; /* Set a minimum width for the grid */
   }
 
-  // Initialize autocomplete when the page loads
-  document.addEventListener('DOMContentLoaded', initAutocomplete);
-
-  // Show spinner on form submission
-  const form = document.getElementById('trip-form');
-  const submitButton = document.getElementById('submit-button');
-  const loadingIndicator = document.getElementById('loading-indicator');
-
-  form.addEventListener('submit', function() {
-    submitButton.disabled = true; // Disable the submit button
-    loadingIndicator.style.display = 'block'; // Show the spinner
-  });
-</script>
-
-<style>
-  /* Spinner styles */
-  .spinner {
-    border: 4px solid #f3f3f3; /* Light grey */
-    border-top: 4px solid #198754; /* Green */
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
-    margin: 0 auto;
+  .main-content {
+    flex: 1; /* Allow the main content to grow and fill available space */
+    margin-bottom: 170px; /* Add spacing equal to the footer height */
   }
 
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+  footer {
+    position: relative; /* Ensure the footer is positioned correctly */
+    z-index: 1; /* Place the footer above the image grid */
+    background-color: #2e7d32; /* Footer background color */
+    color: white;
+    text-align: center;
+    padding: 20px 0;
   }
 
-  #loading-indicator p {
-    margin-top: 10px;
-    font-size: 16px;
-    color: #555;
+  .image-container {
+    position: relative;
+    overflow: hidden;
   }
-</style>
+  .navbar {
+    z-index: 20;
+    position: relative;
+  }
+  
+  .navbar-collapse {
+    z-index: 20;
+    position: relative;
+    background-color: #198754; /* match navbar if needed */
+    width: 100%;
+  }
+  .navbar-nav {
+    flex-direction: column;
+    align-items: flex-start;
+    padding-left: 1rem;
+  }
+
+  .image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Automatically crop images */
+    transition: transform 0.3s ease; /* Smooth hover effect */
+  }
+
+  .image-container:hover img {
+    transform: scale(1.2); /* Enlarge image on hover */
+  }
+  </style>
+  
+  <!-- Grid Build Script -->
+  <script>
+    const imageList = {{ images_json|safe }};
+  
+    document.addEventListener("DOMContentLoaded", function () {
+      const imageGrid = document.getElementById("image-grid");
+  
+      function adjustGrid() {
+        const imageGrid = document.getElementById("image-grid");
+        const footer = document.querySelector("footer");
+        const headerHeight = 70;
+      
+        const gridTop = headerHeight; // we start the grid below the header
+        const footerTop = footer.getBoundingClientRect().top + window.scrollY;
+        const gridHeight = footerTop - gridTop;
+      
+        imageGrid.style.top = `${gridTop}px`;
+        imageGrid.style.height = `${gridHeight}px`;
+      
+        const columnWidth = 150;
+        const gridWidth = imageGrid.offsetWidth;
+        const numColumns = Math.floor(gridWidth / columnWidth);
+        const rowHeight = columnWidth;
+        const numRows = Math.ceil(gridHeight / rowHeight);
+        const totalImagesNeeded = numColumns * numRows;
+      
+        imageGrid.innerHTML = "";
+      
+        for (let i = 0; i < totalImagesNeeded; i++) {
+          const container = document.createElement("div");
+          container.className = "image-container";
+      
+          const img = document.createElement("img");
+          img.src = `/static/${imageList[i % imageList.length]}`;
+          img.alt = "Background Image";
+      
+          container.appendChild(img);
+          imageGrid.appendChild(container);
+        }
+      
+        imageGrid.classList.add("ready");
+      }
+      adjustGrid();
+      window.addEventListener("resize", adjustGrid);
+    });
+  </script>
 {% endblock %}
