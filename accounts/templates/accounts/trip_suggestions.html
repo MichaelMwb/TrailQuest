@@ -17,8 +17,18 @@
   /* Print-specific styles */
   @media print {
     /* Hide elements that shouldn't be printed */
-    .navbar, .btn, .d-flex {
+    .navbar, .btn {
       display: none !important;
+    }
+    /* Hide the suggestions column when printing */
+    .suggestions-column {
+      display: none !important;
+    }
+    /* Make the activities column take full width when printing */
+    .activities-column {
+        width: 100% !important;
+        flex: 0 0 100% !important; /* For Bootstrap flex */
+        max-width: 100% !important;
     }
 
     /* Ensure all accordion sections are expanded when printing */
@@ -60,7 +70,7 @@
 </style>
 
 <div class="d-flex flex-column" style="min-height: 100vh; background-color: #d0f0f2;"> <!-- Full-height container -->
-  <div class="container my-auto"> <!-- Center content vertically -->
+  <div class="container my-auto pt-2 pb-2"> <!-- Added padding-top and padding-bottom -->
     {% if itinerary %}
       <div class="card shadow-lg">
         <div class="card-header bg-success text-white">
@@ -128,7 +138,7 @@
           <!-- Daily Itinerary -->
           <h3 class="mb-3">Daily Activities</h3>
           <div class="accordion" id="itineraryAccordion">
-            {% for day_number, activities in itinerary.days.items %}
+            {% for day_number, day_data in itinerary.days.items %}
               <div class="accordion-item">
                 <h2 class="accordion-header">
                   <button class="accordion-button" 
@@ -141,25 +151,67 @@
                 <div id="day{{ day_number }}" 
                      class="accordion-collapse collapse {% if forloop.first %}show{% endif %}">
                   <div class="accordion-body">
-                    {% for activity in activities %}
-                      <div class="card mb-3">
-                        <div class="card-body">
-                          <h5 class="card-title"> {{activity.name}}</h5>
-                          {% with result=activity.location|split:"|" %}
-                            {% if result.0 == "No results found" or result.0 == "N/A" %} 
-                              <p class="card-text">No results found for this location.</p>
-                            {% else %}
-                              <p class="card-text"><a href="{{result.1}}" target="_blank"> {{ result.0 }} </a></p>
-                              <!-- Display the location link -->
-                            {% endif %}
-                          {% endwith %}
-                          <p class="card-text">{{ activity.description }}</p>
-                          <p class="card-text">
-                            <small class="text-muted">Duration: {{ activity.duration }}</small>
-                          </p>
+                    <div class="row day-content-row" data-day="{{ day_number }}"> 
+                      <!-- Activities Column (contains all activities for the day) -->
+                      <div class="col-md-7 activities-column">
+                        <h5>Activities</h5>
+                        <div class="activities-list">
+                          {% for activity in day_data.activities %}
+                            <div class="activity-card-wrapper">
+                              <div class="card mb-3 activity-card" data-activity-index="{{ forloop.counter0 }}">
+                                <div class="card-body">
+                                  <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="card-title activity-name mb-0">{{ activity.name }}</h5>
+                                    <button class="btn btn-sm btn-outline-danger remove-activity-btn" 
+                                            title="Remove this activity"
+                                            data-activity-index="{{ forloop.counter0 }}">
+                                      &times;
+                                    </button>
+                                  </div>
+                                  {% with result=activity.location|split:"|" %}
+                                  <p class="card-text activity-location"><a href="{{ result.1 }}" target="_blank">{{ result.0 }}</a></p>
+                                  {% endwith %}
+                                  <p class="card-text activity-description">{{ activity.description }}</p>
+                                  <p class="card-text">
+                                    <small class="text-muted activity-duration">Duration: {{ activity.duration }}</small>
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                            {% if not forloop.last %}<hr class="activity-hr">{% endif %}
+                          {% empty %}
+                            <p class="text-muted no-activities-placeholder">No activities scheduled.</p>
+                          {% endfor %}
                         </div>
-                      </div>  
-                    {% endfor %}
+                      </div>
+
+                      <!-- Suggestions Column (contains all suggestions for the day) -->
+                      <div class="col-md-5 suggestions-column">
+                        <h5>Suggestions</h5>
+                        {% if day_data.suggestions %}
+                          {% for suggestion in day_data.suggestions %}
+                            <div class="card mb-2 bg-light suggestion-card" data-suggestion-index="{{ forloop.counter0 }}">
+                              <div class="card-body">
+                                <h6 class="card-title suggestion-name">{{ suggestion.name }}</h6>
+                                {% with result=suggestion.location|split:"|" %}
+                                <p class="card-text suggestion-location"><a href="{{ result.1 }}" target="_blank">{{ result.0 }}</a></p>
+                                {% endwith %}
+                                <p class="card-text suggestion-description">{{ suggestion.description|truncatewords:15 }}</small></p>
+                                <p class="card-text">
+                                  <small class="text-muted suggestion-duration">Duration: {{ suggestion.duration }}</small>
+                                </p>
+                                <button class="btn btn-sm btn-outline-success add-suggestion-btn"
+                                        data-suggestion-index="{{ forloop.counter0 }}">
+                                  Add this activity
+                                </button>
+                              </div>
+                            </div>
+                          {% endfor %}
+                        {% else %}
+                          <p><small>No other suggestions provided.</small></p>
+                        {% endif %}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -190,4 +242,287 @@
     {% endif %}
   </div>
 </div>
+
+{{ trip.id|json_script:"trip-id" }}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const itineraryAccordion = document.getElementById('itineraryAccordion');
+    const tripId = JSON.parse(document.getElementById('trip-id').textContent);
+
+    // --- Helper function to get CSRF token --- 
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    // --- Helper function to create an activity card --- 
+    function createActivityCard(activity, dayNumber, activityIndex) {
+        const locationParts = activity.location.split('|');
+        const locationName = locationParts[0];
+        const locationLink = locationParts.length > 1 && locationParts[1] ? locationParts[1] : '#';
+        
+        const cardWrapper = document.createElement('div'); // Create a wrapper for card and potential HR
+        cardWrapper.className = 'activity-card-wrapper'; // Use this class for easier removal
+        
+        const cardDiv = document.createElement('div');
+        cardDiv.className = 'card mb-3 activity-card';
+        cardDiv.dataset.activityIndex = activityIndex; // Set index on card
+        
+        cardDiv.innerHTML = `
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h5 class="card-title activity-name mb-0">${activity.name || 'Unnamed Activity'}</h5>
+                    <button class="btn btn-sm btn-outline-danger remove-activity-btn" 
+                            title="Remove this activity"
+                            data-activity-index="${activityIndex}">
+                      &times;
+                    </button>
+                </div>
+                <p class="card-text activity-location"><a href="${locationLink}" target="_blank">${locationName || 'Unknown Location'}</a></p>
+                <p class="card-text activity-description">${activity.description || ''}</p>
+                <p class="card-text">
+                    <small class="text-muted activity-duration">Duration: ${activity.duration || 'N/A'}</small>
+                </p>
+            </div>
+        `;
+        cardWrapper.appendChild(cardDiv);
+        return cardWrapper;
+    }
+    
+    // --- Helper function to add placeholder if needed --- 
+    function addPlaceholderIfNeeded(activitiesList) {
+        if (activitiesList && activitiesList.children.length === 0) {
+            const placeholder = document.createElement('p');
+            placeholder.className = 'text-muted no-activities-placeholder';
+            placeholder.textContent = 'No activities scheduled.';
+            activitiesList.appendChild(placeholder);
+        }
+    }
+
+    // --- Helper function to remove placeholder if present --- 
+    function removePlaceholderIfNeeded(activitiesList) {
+        const placeholder = activitiesList.querySelector('.no-activities-placeholder');
+        if (placeholder) {
+            placeholder.remove();
+        }
+    }
+
+    // --- Helper function to remove suggestion placeholder if present --- 
+    function removeSuggestionPlaceholderIfNeeded(suggestionsColumn) {
+        const placeholder = suggestionsColumn.querySelector('.no-suggestions-placeholder');
+        if (placeholder) {
+            placeholder.remove();
+        }
+    }
+
+    // --- Helper function to add suggestion placeholder if needed ---
+    function addSuggestionPlaceholderIfNeeded(suggestionsColumn) {
+        if (suggestionsColumn && !suggestionsColumn.querySelector('.suggestion-card')) { // Check if any suggestion cards remain
+            const placeholder = document.createElement('p');
+            placeholder.className = 'text-muted no-suggestions-placeholder';
+            placeholder.innerHTML = '<small>No suggestions remaining.</small>';
+            // Append inside the column, after the h5 maybe? Or just at the end.
+             const heading = suggestionsColumn.querySelector('h5');
+            if(heading) {
+                heading.parentNode.appendChild(placeholder); // Append after heading
+            } else {
+                suggestionsColumn.appendChild(placeholder); // Fallback
+            }
+        }
+    }
+
+    if (itineraryAccordion) {
+        console.log('Itinerary accordion listener attached.'); // Log listener attachment
+
+        itineraryAccordion.addEventListener('click', function(event) {
+            console.log('Accordion clicked. Target:', event.target); // Log any click inside
+            
+            const target = event.target;
+            const dayRow = target.closest('.day-content-row');
+            
+            console.log('Found dayRow:', dayRow); // Log if dayRow was found
+            if (!dayRow) {
+                console.log('Click was outside a day row, exiting.');
+                return; 
+            }
+            const day = dayRow.dataset.day;
+            const activitiesList = dayRow.querySelector('.activities-list');
+            console.log(`Processing click for Day: ${day}`); // Log which day is being processed
+            
+            // --- Handle Remove Activity --- 
+            if (target.classList.contains('remove-activity-btn')) {
+                console.log('Remove button clicked.', target); // Log remove button identification
+                
+                const activityIndexStr = target.dataset.activityIndex;
+                console.log(`Attempting removal for index (string): '${activityIndexStr}'`); // Log the raw data attribute
+                
+                const activityIndex = parseInt(activityIndexStr, 10);
+                console.log(`Parsed index (number): ${activityIndex}`); // Log the parsed index
+                
+                const cardWrapper = target.closest('.activity-card-wrapper'); 
+                console.log('Found card wrapper:', cardWrapper); // Log the found wrapper
+                
+                if (isNaN(activityIndex)) {
+                    console.error('Invalid activity index (NaN).');
+                    return;
+                }
+                 if (!cardWrapper) {
+                    console.error('Could not find activity card wrapper.');
+                    return;
+                }
+
+                console.log('---> About to show confirm dialog...'); // Log right before confirm
+                if (!confirm('Are you sure you want to remove this activity?')) {
+                    console.log('User cancelled removal.');
+                    return; // Stop if user cancels
+                }
+                console.log('User confirmed removal. Proceeding with fetch...'); // Log after confirm
+
+                const url = `/trip/${tripId}/day/${day}/remove/${activityIndex}/`;
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) { 
+                        return response.json().then(err => { throw new Error(err.message || 'Server error'); });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.status === 'success') {
+                        console.log('Activity removed:', data.message);
+                        
+                        // --- Refined HR Removal Logic --- 
+                        const hrBefore = cardWrapper.previousElementSibling;
+                        const hrAfter = cardWrapper.nextElementSibling;
+
+                        if (hrAfter && hrAfter.tagName === 'HR' && hrAfter.classList.contains('activity-hr')) {
+                            // If removing any card BUT the last, remove the HR that follows it.
+                            hrAfter.remove();
+                        } else if (hrBefore && hrBefore.tagName === 'HR' && hrBefore.classList.contains('activity-hr')) {
+                            // If removing the LAST card, remove the HR that precedes it.
+                            hrBefore.remove();
+                        }
+                        // ------------------------------
+                        
+                        // Remove the card wrapper itself (AFTER checking siblings)
+                        cardWrapper.remove();
+
+                        // Add placeholder if activities list is now empty
+                        addPlaceholderIfNeeded(activitiesList);
+                        
+                        // TODO: Re-index data-activity-index attributes of remaining activities
+                        const remainingCards = activitiesList.querySelectorAll('.activity-card');
+                        remainingCards.forEach((card, index) => {
+                            card.dataset.activityIndex = index;
+                            const button = card.querySelector('.remove-activity-btn');
+                            if (button) button.dataset.activityIndex = index;
+                        });
+
+                    } else {
+                        console.error('Error removing activity:', data.message);
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    alert('An error occurred while removing the activity: ' + error.message);
+                });
+            }
+
+            // --- Handle Add Suggestion --- 
+            if (target.classList.contains('add-suggestion-btn')) {
+                 console.log('Add button clicked.', target); // Log add button clicks too
+                 const suggestionIndex = parseInt(target.dataset.suggestionIndex, 10);
+                 console.log(`Attempting to add suggestion index: ${suggestionIndex}`);
+                
+                if (isNaN(suggestionIndex)) {
+                    console.error('Invalid suggestion index for adding');
+                    return;
+                }
+                
+                const url = `/trip/${tripId}/day/${day}/add/${suggestionIndex}/`;
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                     if (!response.ok) { 
+                        return response.json().then(err => { throw new Error(err.message || 'Server error'); });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.status === 'success') {
+                        console.log('Activity added:', data.added_activity);
+                        if (activitiesList) {
+                            // Remove activity placeholder if it exists
+                            removePlaceholderIfNeeded(activitiesList);
+                            
+                            // Add HR if there are existing activities
+                            if (activitiesList.children.length > 0) {
+                                const hr = document.createElement('hr');
+                                hr.className = 'activity-hr';
+                                activitiesList.appendChild(hr);
+                            }
+                            
+                            // Create and append the new activity card wrapper
+                            const newCardWrapper = createActivityCard(data.added_activity, day, data.new_index);
+                            activitiesList.appendChild(newCardWrapper);
+                        }
+                        
+                        // --- MOVE THE SUGGESTION --- 
+                        // Remove the suggestion card from the DOM
+                        const suggestionCard = target.closest('.suggestion-card');
+                        suggestionCard.remove(); 
+                        
+                        // Check if suggestions column is now empty and add placeholder
+                        const suggestionsColumn = dayRow.querySelector('.suggestions-column');
+                        addSuggestionPlaceholderIfNeeded(suggestionsColumn);
+                        // --------------------------
+                        
+                        // Disable original button (already done, but keep for clarity)
+                        target.disabled = true;
+                        target.textContent = 'Added';
+                        target.classList.remove('btn-outline-success');
+                        target.classList.add('btn-success');
+                    } else {
+                        console.error('Error adding activity:', data.message);
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    alert('An error occurred while adding the activity: ' + error.message);
+                });
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
+
 {% endblock %}

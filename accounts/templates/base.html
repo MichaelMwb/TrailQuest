@@ -7,60 +7,83 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        html, body {
-          margin: 0;             /* Remove default browser margin */
-          padding: 0;            /* Remove default browser padding */
-          height: 100%;          /* Ensure full screen height */
-        }
-      </style>
+    html, body {
+        margin: 0;             /* Remove default browser margin */
+        padding: 0;            /* Remove default browser padding */
+        height: 100%;          /* Ensure full screen height */
+    }
+    html {
+        background-color: #d0f0f2; /* Match the body background color */
+    }
+    .navbar-nav .nav-link {
+        font-weight: 500;          /* Make text less bold */
+        font-size: 18px;           /* Keep font size */
+        letter-spacing: 1px;       /* Add spacing between letters */
+        margin-right: 20px;        /* Add spacing between links */
+    }
+    .navbar-nav {
+        margin-left: 0;            /* Shift links to the left */
+    }
+</style>
 </head>
-<body class="d-flex flex-column" style="min-height: 100vh;"> <!-- Flexbox container -->
+<body style="height: 100%; background-color: #d0f0f2;">
     <nav class="navbar navbar-expand-lg" style="background-color: #198754; color: white; height: 75px;">
         <div class="container-fluid">
-            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-                <ul class="navbar-nav">
-                    {% if user.is_authenticated %}
-                        <!-- Links for logged-in users -->
-                        <li class="nav-item">
-                            <a class="nav-link text-white" href="{% url 'home.about' %}">About</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white" href="{% url 'trip_preferences' %}">Plan a Trip</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white" href="{% url 'trip_suggestions' %}">Current Itinerary</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white" href="{% url 'past_trips' %}">Past Itineraries</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-black" href="{% url 'accounts.logout' %}">Logout</a>
-                        </li>
-                    {% else %}
-                        <!-- Links for logged-out users -->
-                        <li class="nav-item">
-                            <a class="nav-link text-white" href="{% url 'home.about' %}">About</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white" href="{% url 'accounts.signup' %}">Sign Up</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white" href="{% url 'accounts.login' %}">Sign In</a>
-                        </li>
-                    {% endif %}
-                </ul>
-            </div>
+          <!-- Brand Logo and Text -->
+          <a class="navbar-brand d-flex align-items-center" href="#">
+            <img src="{% static 'img/NavBarLogo.png' %}" alt="TrailQuest Logo" style="height: 50px; width: auto;">
+            <strong class="ms-2 text-white">TrailQuest</strong>
+          </a>
+      
+          <!-- Toggler at the end -->
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                  aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+      
+          <!-- Collapsible content should follow toggler, not be inside a flex conflict -->
+          <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+              {% if user.is_authenticated %}
+                <li class="nav-item">
+                  <a class="nav-link text-white" href="{% url 'home.about' %}">About</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link text-white" href="{% url 'trip_preferences' %}">Plan a Trip</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link text-white" href="{% url 'trip_suggestions' %}">Current Itinerary</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link text-white" href="{% url 'past_trips' %}">Past Itineraries</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link text-white" href="{% url 'accounts.logout' %}">Logout</a>
+                </li>
+              {% else %}
+                <li class="nav-item">
+                  <a class="nav-link text-white" href="{% url 'home.about' %}">About</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link text-white" href="{% url 'accounts.signup' %}">Sign Up</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link text-white" href="{% url 'accounts.login' %}">Sign In</a>
+                </li>
+              {% endif %}
+            </ul>
+          </div>
         </div>
-    </nav>
+      </nav>
+      
 
-    <main class="flex-grow-1"> <!-- Content area that grows to fill space -->
+    <main style="min-height: calc(100vh - 75px - 64px);"> <!-- Adjust for header and footer heights -->
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="text-white py-4" style="background-color: #198754;">
+    <footer class="text-white py-4" style="background-color: #198754; margin-top: 0;">
         <div class="container">
             <div class="row">
-                <!-- Footer content -->
                 <div class="col-md-3">
                     <h5>Team Name</h5>
                     <p>TrailQuest Team</p>
@@ -82,4 +105,37 @@
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+<style>
+.navbar {
+    z-index: 20;
+    position: relative;
+  }
+  
+  .navbar-collapse {
+    width: 100%;
+    background-color: #198754;
+  }
+  
+  .navbar-nav {
+    flex-direction: column;
+    align-items: flex-start;
+    padding-left: 1rem;
+  }
+</style>
+  <script>
+    document.addEventListener("click", function (event) {
+      const navbar = document.querySelector(".navbar");
+      const navbarCollapse = document.querySelector(".navbar-collapse");
+  
+      const isClickInside = navbar.contains(event.target);
+      const isExpanded = navbarCollapse.classList.contains("show");
+  
+      if (!isClickInside && isExpanded) {
+        const collapseInstance = bootstrap.Collapse.getInstance(navbarCollapse);
+        if (collapseInstance) {
+          collapseInstance.hide();
+        }
+      }
+    });
+  </script>
 </html>

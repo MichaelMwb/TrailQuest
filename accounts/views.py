@@ -15,6 +15,9 @@ import json
 from TRAILQUEST.settings import OPENAI_API_KEY
 from django.http import HttpResponseRedirect
 from django.urls import reverse
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt # Use csrf_protect in production with proper setup
 
 @login_required
 def logout(request):
@@ -130,12 +133,22 @@ from openai import Timeout
 import logging
 
 logger = logging.getLogger(__name__)
+import os
+from django.conf import settings
+from django.utils.safestring import mark_safe
 
 @login_required
 def trip_preferences_view(request):
     client = OpenAI(
         api_key=OPENAI_API_KEY
     )
+
+    # Fetch images from the static/background/ folder
+    background_folder = os.path.join(settings.STATICFILES_DIRS[0], 'background')
+    images = [
+        f"background/{file}" for file in os.listdir(background_folder)
+        if file.endswith(('.jpg', '.jpeg'))
+    ]
 
     if request.method == 'POST':
         form = TripPreferencesForm(request.POST)
@@ -152,8 +165,10 @@ def trip_preferences_view(request):
             Difficulty level: {cd['difficulty']}
             Group size: {cd['group_size']}
             
-            Please provide a detailed day-by-day itinerary and packing checklist in the following JSON format:
-            {{
+            For each day in the itinerary, please provide the main activities AND 2-3 alternative activity suggestions that match the activity type and difficulty.
+            
+            Please provide the response in the following JSON format:
+            {{ 
                 "name": "trip name",
                 "location": "location name",
                 "difficulty": "easy/medium/hard",
@@ -165,18 +180,34 @@ def trip_preferences_view(request):
                     "safety": ["item1", "item2", "item3"]
                 }},
                 "days": {{
-                    "1": [
-                        {{
-                            "name": "activity name",
-                            "location": "activity location",
-                            "type": "activity type",
-                            "description": "activity description",
-                            "duration": "duration in hours"
-                        }}
-                    ]
+                    "1": {{ 
+                        "activities": [
+                            {{
+                                "name": "main activity name",
+                                "location": "main activity location",
+                                "description": "main activity description",
+                                "duration": "duration in hours"
+                            }}
+                        ],
+                        "suggestions": [
+                            {{
+                                "name": "suggestion name 1",
+                                "location": "suggestion location 1",
+                                "description": "suggestion description 1",
+                                "duration": "suggestion duration 1"
+                            }},
+                            {{
+                                "name": "suggestion name 2",
+                                "location": "suggestion location 2",
+                                "description": "suggestion description 2",
+                                "duration": "suggestion duration 2"
+                            }}
+                        ]
+                    }} 
+                    // ... more days ...
                 }}
             }}
-            In the JSON response, make sure that the location is a real place that can be queried by Google Maps, and I can get directions to. Set the location to N/A if the location is not available.
+            In the JSON response, make sure that all locations (both main activities and suggestions) are real places that can be queried by Google Maps, and I can get directions to. Ensure suggestions fit the activity type '{cd['activities']}' and difficulty '{cd['difficulty']}'.
             """
 
             # Call OpenAI API
@@ -195,11 +226,11 @@ def trip_preferences_view(request):
                 return redirect('trip_preferences')
 
             # Debugging: Log the response
-            logger.debug("OpenAI API Response: %s", response)
+           # logger.debug("OpenAI API Response: %s", response)
 
             # Extract and clean the response content
             raw_content = response.choices[0].message.content
-            logger.debug("Raw Response Content: %s", raw_content)
+           # logger.debug("Raw Response Content: %s", raw_content)
 
             # Improved cleaning logic
             if "```json" in raw_content:
@@ -209,11 +240,11 @@ def trip_preferences_view(request):
             else:
                 cleaned_content = raw_content.strip()
 
-            logger.debug("Cleaned Content: %s", cleaned_content)
+           # logger.debug("Cleaned Content: %s", cleaned_content)
 
             # Validate the cleaned content
             if not cleaned_content.startswith("{") or not cleaned_content.endswith("}"):
-                logger.error("Invalid JSON Format: %s", cleaned_content)
+               # logger.error("Invalid JSON Format: %s", cleaned_content)
                 messages.error(request, "The OpenAI API returned an invalid itinerary format. Please try again.")
                 return redirect('trip_preferences')
 
@@ -226,10 +257,13 @@ def trip_preferences_view(request):
                 return redirect('trip_preferences')
 
             for day in itinerary_data['days']:
-                for i in range(len(itinerary_data['days'][day])):
-                    print(itinerary_data['days'][day][i]['name'])
+                for i in range(len(itinerary_data['days'][day]['activities'])):
                     # Add a Google Maps link to the location
-                    itinerary_data['days'][day][i]['location'] = itinerary_data['days'][day][i]['location'] + "|https://www.google.com/maps/search/?api=1&query=" + itinerary_data['days'][day][i]['location'].lower().replace(" ", "+")
+                    itinerary_data['days'][day]['activities'][i]['location'] = itinerary_data['days'][day]['activities'][i]['location'] + "|https://www.google.com/maps/search/?api=1&query=" + itinerary_data['days'][day]['activities'][i]['location'].lower().replace(" ", "+")
+
+                for i in range(len(itinerary_data['days'][day]['suggestions'])):
+                    # Add a Google Maps link to the location
+                    itinerary_data['days'][day]['suggestions'][i]['location'] = itinerary_data['days'][day]['suggestions'][i]['location'] + "|https://www.google.com/maps/search/?api=1&query=" + itinerary_data['days'][day]['suggestions'][i]['location'].lower().replace(" ", "+")
 
             print("About to save the trip...")
             # Save the trip
@@ -245,107 +279,15 @@ def trip_preferences_view(request):
                 completed=False  # Mark as not completed
             )
 
-            # Delete any existing suggestions for the user
-            Suggestion.objects.filter(user=request.user).delete()
-
-            # Construct the suggestions prompt
-            suggestions_prompt = f"""Create a detailed itinerary for one more day in {cd['location']} without repeating the trip itinerary content in previous output.
-            Trip name: {cd['trip_name']}
-            Activity type: {cd['activities']}
-            Difficulty level: {cd['difficulty']}
-            Group size: {cd['group_size']}
-            
-            Please provide a detailed suggestion for new activities without repeating the trip itinerary content in previous output in the following JSON format:
-            {{
-                "name": "trip name",
-                "location": "location name",
-                "difficulty": "easy/medium/hard",
-                "suggestions": {{
-                    "1": [
-                        {{
-                            "name": "activity name",
-                            "location": "activity location",
-                            "type": "activity type",
-                            "description": "activity description",
-                            "duration": "duration in hours"
-                        }}
-                    ]
-                }}
-            }}
-            In the JSON response, make sure that the location is a real place that can be queried by Google Maps, and I can get directions to. Set the location to N/A if the location is not available.
-            Please do not repeat the trip itinerary content in previous output.
-            """
-
-            # Call OpenAI API
-            try:
-                response = client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=[
-                        {"role": "system", "content": "You are an expert trail and camping trip planner."},
-                        {"role": "user", "content": suggestions_prompt}
-                    ],
-                    timeout=60  # Increase timeout to 60 seconds
-                )
-            except Timeout as e:
-                print("OpenAI API Timeout:", e)
-                messages.error(request, "The request to the OpenAI API timed out. Please try again.")
-                return redirect('trip_preferences')
-
-            # Debugging: Log the response
-            logger.debug("OpenAI API Response: %s", response)
-
-            # Extract and clean the response content
-            raw_content = response.choices[0].message.content
-            logger.debug("Raw Response Content: %s", raw_content)
-
-            # Improved cleaning logic
-            if "```json" in raw_content:
-                cleaned_content = raw_content.split("```json")[1].split("```")[0].strip()
-            elif "```" in raw_content:
-                cleaned_content = raw_content.split("```")[1].split("```")[0].strip()
-            else:
-                cleaned_content = raw_content.strip()
-
-            logger.debug("Cleaned Content: %s", cleaned_content)
-
-            # Validate the cleaned content
-            if not cleaned_content.startswith("{") or not cleaned_content.endswith("}"):
-                logger.error("Invalid JSON Format: %s", cleaned_content)
-                messages.error(request, "The OpenAI API returned an invalid itinerary format. Please try again.")
-                return redirect('trip_preferences')
-
-            # Attempt to parse the cleaned content
-            try:
-                suggestions_data = json.loads(cleaned_content)
-            except json.JSONDecodeError as e:
-                print("JSONDecodeError:", e)
-                messages.error(request, "Failed to parse the itinerary. Please try again.")
-                return redirect('trip_preferences')
-
-            for key, activities in suggestions_data['suggestions'].items():
-                for activity in activities:
-                    print(activity["name"])
-                    activity['location'] = activity['location'] + "|https://www.google.com/maps/search/?api=1&query=" + activity['location'].lower().replace(" ", "+")
-
-            print("About to save the suggestions...")
-            # Save the trip
-            Suggestion.objects.create(
-                user=request.user,
-                trip_name=cd['trip_name'] if cd['trip_name'] else "Untitled Trip",
-                location=cd['location'],
-                group_size=cd['group_size'],
-                activity=cd['activities'],
-                difficulty=cd['difficulty'],
-                itinerary=json.dumps(suggestions_data)  # Save the itinerary JSON
-            )
-
-            logger.debug("Trip saved successfully. Redirecting to trip suggestions...")  # Debugging log
+            #logger.debug("Trip saved successfully. Redirecting to trip suggestions...")  # Debugging log
             return redirect('trip_suggestions')
 
     else:
         form = TripPreferencesForm()
 
-    return render(request, 'accounts/trip_preferences.html', {'form': form})
+    # Pass the images and form to the template
+    return render(request, 'accounts/trip_preferences.html', {'form': form, 
+                                                              'images_json': mark_safe(json.dumps(images)),  'images': images})
 
 from django.shortcuts import render
 from .models import Trip
@@ -408,3 +350,57 @@ def trip_suggestions(request):
         'trip': current_trip,
         'itinerary': itinerary
     })
+
+@login_required
+@require_POST # Ensure only POST requests are allowed
+# @csrf_exempt # Temporarily disable CSRF for easier AJAX testing, add proper handling later
+def remove_activity(request, trip_id, day_number, activity_index):
+    trip = get_object_or_404(Trip, id=trip_id, user=request.user)
+    try:
+        itinerary_data = json.loads(trip.itinerary)
+        day_str = str(day_number) # JSON keys are strings
+        
+        if day_str in itinerary_data['days'] and 0 <= activity_index < len(itinerary_data['days'][day_str]['activities']):
+            removed_activity = itinerary_data['days'][day_str]['activities'].pop(activity_index)
+            trip.itinerary = json.dumps(itinerary_data)
+            trip.save()
+            return JsonResponse({'status': 'success', 'message': f'Removed: {removed_activity.get("name", "Activity")}'})
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Invalid day or activity index.'}, status=400)
+            
+    except (json.JSONDecodeError, KeyError, IndexError) as e:
+        return JsonResponse({'status': 'error', 'message': f'Failed to process request: {str(e)}'}, status=500)
+
+@login_required
+@require_POST
+# @csrf_exempt # Temporarily disable CSRF
+def add_activity(request, trip_id, day_number, suggestion_index):
+    trip = get_object_or_404(Trip, id=trip_id, user=request.user)
+    try:
+        itinerary_data = json.loads(trip.itinerary)
+        day_str = str(day_number) # JSON keys are strings
+
+        if day_str in itinerary_data['days'] and 'suggestions' in itinerary_data['days'][day_str] and 0 <= suggestion_index < len(itinerary_data['days'][day_str]['suggestions']):
+            
+            # Get the suggestion AND remove it from the suggestions list in one step
+            suggestion_to_add = itinerary_data['days'][day_str]['suggestions'].pop(suggestion_index)
+            
+            # Ensure the suggestion hasn't already been added (optional check)
+            # if suggestion_to_add not in itinerary_data['days'][day_str]['activities']:
+            
+            # Add the suggestion to the main activities list
+            itinerary_data['days'][day_str]['activities'].append(suggestion_to_add)
+            
+            # Save the modified itinerary (with suggestion removed and activity added)
+            trip.itinerary = json.dumps(itinerary_data)
+            trip.save()
+            
+            # Return the added activity data so the UI can update
+            return JsonResponse({'status': 'success', 'added_activity': suggestion_to_add, 'new_index': len(itinerary_data['days'][day_str]['activities']) - 1})
+            # else:
+            #     return JsonResponse({'status': 'info', 'message': 'Activity already exists.'})
+        else:
+             return JsonResponse({'status': 'error', 'message': 'Invalid day or suggestion index.'}, status=400)
+
+    except (json.JSONDecodeError, KeyError, IndexError) as e:
+        return JsonResponse({'status': 'error', 'message': f'Failed to process request: {str(e)}'}, status=500)
