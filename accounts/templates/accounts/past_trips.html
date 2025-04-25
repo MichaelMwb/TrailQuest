@@ -29,25 +29,28 @@
                     <div class="accordion-body">
                         {% if trip.itinerary and trip.itinerary.days %}
                             <ul class="list-group">
-                                {% for day, activities in trip.itinerary.days.items %}
+                                {% for day_number, day_data in trip.itinerary.days.items %}
                                     <li class="list-group-item">
-                                        <strong>Day {{ day }}</strong>
+                                        <strong>Day {{ day_number }}</strong>
                                         <ul>
-                                            {% for activity in activities %}
+                                            {% for activity in day_data.activities %}
                                                 <li>
                                                     {% with result=activity.location|split:"|" %}
                                                     {{activity.name}} - <a href="{{ result.1 }}" target="_blank" class="text-decoration-none">
                                                         {{ result.0 }}
                                                     </a>
-                                                    {% endwith %} 
+                                                    {% endwith %}
+                                                    {% if activity.description %}<small class="text-muted d-block">{{ activity.description }}</small>{% endif %}
                                                 </li>
+                                            {% empty %}
+                                                <li>No activities recorded for this day.</li>
                                             {% endfor %}
                                         </ul>
                                     </li>
                                 {% endfor %}
                             </ul>
                         {% else %}
-                            <p>No landmarks available for this trip.</p>
+                            <p>No detailed itinerary available for this trip.</p>
                         {% endif %}
                     </div>
                 </div>
