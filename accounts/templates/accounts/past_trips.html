@@ -41,18 +41,19 @@
                                                     {% else %}
                                                       {{activity.name}} - <a href="{{result.1}}" target="_blank" class="text-decoration-none"> 
                                                         {{ result.0 }}
-                                                      </a>
-                                                      <!-- Display the location link -->
-                                                    {% endif %}
-                                                    {% endwith %} 
+                                                    </a>
+                                                    {% endwith %}
+                                                    {% if activity.description %}<small class="text-muted d-block">{{ activity.description }}</small>{% endif %}
                                                 </li>
+                                            {% empty %}
+                                                <li>No activities recorded for this day.</li>
                                             {% endfor %}
                                         </ul>
                                     </li>
                                 {% endfor %}
                             </ul>
                         {% else %}
-                            <p>No landmarks available for this trip.</p>
+                            <p>No detailed itinerary available for this trip.</p>
                         {% endif %}
                     </div>
                 </div>
