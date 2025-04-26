@@ -240,7 +240,7 @@
 
           <div class="d-flex justify-content-between mt-4">
             <!-- Print Itinerary Button on the Left -->
-            <button class="btn btn-primary" onclick="window.print()">Print Itinerary</button>
+            <button class="btn" id="print-button" onclick="window.print()">Print Itinerary</button>
 
             <!-- Mark as Completed Button in the Center -->
             <form method="POST" action="{% url 'complete_trip' trip.id %}">
@@ -249,7 +249,7 @@
             </form>
 
             <!-- Plan Another Trip Button on the Right -->
-            <a href="{% url 'trip_preferences' %}" class="btn btn-secondary">Plan Another Trip</a>
+            <a href="{% url 'trip_preferences' %}" class="btn" id="another-trip-button">Plan Another Trip</a>
           </div>
         </div>
       </div>
