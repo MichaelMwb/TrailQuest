@@ -12,11 +12,11 @@
             <p class="text-muted text-center">Log in to continue your adventure</p>
             <hr />
 
-            {% if template_data.error %}
-              <div class="alert alert-danger">{{ template_data.error }}</div>
+            {% if error %}
+              <div class="alert alert-danger">{{ error }}</div>
             {% endif %}
-            {% if template_data.message %}
-              <div class="alert alert-success">{{ template_data.message }}</div>
+            {% if message %}
+              <div class="alert alert-success">{{ message }}</div>
             {% endif %}
 
             <form method="POST" id="login-form">
