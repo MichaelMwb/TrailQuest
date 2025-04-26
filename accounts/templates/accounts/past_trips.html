@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load filter %}
+{% load static %}
 {% block content %}
 <div class="d-flex flex-column" style="min-height: 100vh; background-color: #d0f0f2;"> <!-- Full-height container -->
   <div class="image-grid" id="image-grid"></div>
@@ -33,7 +34,7 @@
                         <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse" aria-labelledby="heading{{ forloop.counter }}" data-bs-parent="#pastTripsAccordion">
                             <div class="accordion-body">
                                 {% if trip.itinerary and trip.itinerary.days %}
-                                    <ul class="list-group">
+                                    <ul class="list-group list-group-flush">
                                         {% for day_number, day_data in trip.itinerary.days.items %}
                                             <li class="list-group-item">
                                                 <strong>Day {{ day_number }}</strong>
@@ -76,6 +77,113 @@
     </div>
   </div>
 </div>
-<!-- Bootstrap Bundle with Popper -->
+<!-- End of main-content wrapper -->
+
+<!-- Add Bootstrap JS if not already included in base.html -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+AMrE5E1e6uj9zB8+AmvtOn1y7FGV" crossorigin="anonymous"></script>
+
+<!-- Add CSS for the image grid -->
+<style>
+  /* Background Grid Styles */
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Adjust size as needed */
+  gap: 1px; /* Space between images */
+  position: absolute; /* Allow the grid to scroll with the page */
+  top: 70px; /* Start below the header */
+  left: 0;
+  width: 100%;
+  height: calc(100vh - 240px); /* Subtract header (70px) and footer (170px) height */
+  z-index: 0;
+  overflow: hidden; /* Prevent extra rows from being displayed */
+  min-width: 600px; /* Set a minimum width for the grid */
+}
+
+.main-content {
+  position: relative; /* Ensure content is above the grid */
+  z-index: 1; /* Place content above the image grid */
+  flex: 1; /* Allow the main content to grow */
+  margin-bottom: 170px; /* Add spacing equal to the footer height */
+  padding-top: 20px; /* Optional: Add padding if needed */
+}
+
+footer {
+  position: relative; /* Ensure the footer is positioned correctly */
+  z-index: 1; /* Place the footer above the image grid */
+  /* background-color: #2e7d32; Footer background color (adjust if needed) */
+  color: white;
+  text-align: center;
+  padding: 20px 0;
+}
+
+.image-container {
+  position: relative;
+  overflow: hidden;
+  height: 150px; /* Ensure containers have a fixed height */
+}
+
+.image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Automatically crop images */
+  transition: transform 0.3s ease; /* Smooth hover effect */
+}
+
+.image-container:hover img {
+  transform: scale(1.2); /* Enlarge image on hover */
+}
+</style>
+
+<!-- Add JavaScript for the image grid -->
+<script>
+  const imageList = {{ images_json|safe }};
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const imageGrid = document.getElementById("image-grid");
+
+    function adjustGrid() {
+      const imageGrid = document.getElementById("image-grid");
+      const footer = document.querySelector("footer");
+      const headerHeight = 70; // Adjust if your header height is different
+
+      // Calculate grid dimensions dynamically
+      const gridTop = headerHeight; // Start grid below header
+      const footerTop = footer.getBoundingClientRect().top + window.scrollY;
+      const gridHeight = Math.max(0, footerTop - gridTop); // Ensure height isn't negative
+
+      imageGrid.style.top = `${gridTop}px`;
+      imageGrid.style.height = `${gridHeight}px`;
+
+      const columnWidth = 150; // Width of each image cell
+      const gridWidth = imageGrid.offsetWidth;
+      const numColumns = Math.max(1, Math.floor(gridWidth / columnWidth)); // Ensure at least one column
+      const rowHeight = columnWidth; // Assuming square cells
+      const numRows = Math.max(1, Math.ceil(gridHeight / rowHeight)); // Ensure at least one row
+      const totalImagesNeeded = numColumns * numRows;
+
+      imageGrid.innerHTML = ""; // Clear existing images
+
+      if (imageList.length > 0) { // Only populate if images exist
+        for (let i = 0; i < totalImagesNeeded; i++) {
+          const container = document.createElement("div");
+          container.className = "image-container";
+
+          const img = document.createElement("img");
+          // Cycle through images using modulo
+          img.src = `/static/${imageList[i % imageList.length]}`; 
+          img.alt = "Background Image";
+
+          container.appendChild(img);
+          imageGrid.appendChild(container);
+        }
+      }
+
+      imageGrid.classList.add("ready"); // Mark grid as ready (optional)
+    }
+
+    // Initial grid adjustment and on resize
+    adjustGrid();
+    window.addEventListener("resize", adjustGrid);
+  });
+</script>
 {% endblock content %}
