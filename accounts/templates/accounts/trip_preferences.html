@@ -134,6 +134,14 @@
     flex: 1; /* Allow the main content to grow and fill available space */
     margin-bottom: 170px; /* Add spacing equal to the footer height */
   }
+  @media (max-width: 768px) {
+    .image-grid {
+      min-width: 100vw; /* Allow background to shrink for mobile screens */
+      width: 100vw;
+      left: 0;
+      transform: none;
+    }
+  }
 
   footer {
     position: relative; /* Ensure the footer is positioned correctly */
