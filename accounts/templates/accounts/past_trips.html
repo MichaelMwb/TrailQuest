@@ -134,7 +134,6 @@ footer {
 }
 </style>
 
-<!-- Add JavaScript for the image grid -->
 <script>
   const imageList = {{ images_json|safe }};
 
@@ -142,35 +141,32 @@ footer {
     const imageGrid = document.getElementById("image-grid");
 
     function adjustGrid() {
-      const imageGrid = document.getElementById("image-grid");
       const footer = document.querySelector("footer");
-      const headerHeight = 70; // Adjust if your header height is different
+      const headerHeight = 70;
 
-      // Calculate grid dimensions dynamically
-      const gridTop = headerHeight; // Start grid below header
+      const gridTop = headerHeight;
       const footerTop = footer.getBoundingClientRect().top + window.scrollY;
-      const gridHeight = Math.max(0, footerTop - gridTop); // Ensure height isn't negative
+      const gridHeight = Math.max(0, footerTop - gridTop);
 
       imageGrid.style.top = `${gridTop}px`;
       imageGrid.style.height = `${gridHeight}px`;
 
-      const columnWidth = 150; // Width of each image cell
+      const columnWidth = 150;
       const gridWidth = imageGrid.offsetWidth;
-      const numColumns = Math.max(1, Math.floor(gridWidth / columnWidth)); // Ensure at least one column
-      const rowHeight = columnWidth; // Assuming square cells
-      const numRows = Math.max(1, Math.ceil(gridHeight / rowHeight)); // Ensure at least one row
+      const numColumns = Math.max(1, Math.floor(gridWidth / columnWidth));
+      const rowHeight = columnWidth;
+      const numRows = Math.max(1, Math.ceil(gridHeight / rowHeight));
       const totalImagesNeeded = numColumns * numRows;
 
-      imageGrid.innerHTML = ""; // Clear existing images
+      imageGrid.innerHTML = "";
 
-      if (imageList.length > 0) { // Only populate if images exist
+      if (imageList.length > 0) {
         for (let i = 0; i < totalImagesNeeded; i++) {
           const container = document.createElement("div");
           container.className = "image-container";
 
           const img = document.createElement("img");
-          // Cycle through images using modulo
-          img.src = `/static/${imageList[i % imageList.length]}`; 
+          img.src = `/static/${imageList[i % imageList.length]}`;
           img.alt = "Background Image";
 
           container.appendChild(img);
@@ -178,12 +174,22 @@ footer {
         }
       }
 
-      imageGrid.classList.add("ready"); // Mark grid as ready (optional)
+      imageGrid.classList.add("ready");
     }
 
-    // Initial grid adjustment and on resize
+    // Initial grid adjustment
     adjustGrid();
+
+    // Adjust when window resizes
     window.addEventListener("resize", adjustGrid);
+
+    // 🔥 NEW: Adjust when accordion expands or collapses
+    const accordion = document.getElementById('pastTripsAccordion');
+    if (accordion) {
+      accordion.addEventListener('shown.bs.collapse', adjustGrid);  // when an accordion opens
+      accordion.addEventListener('hidden.bs.collapse', adjustGrid); // when an accordion closes
+    }
   });
 </script>
+
 {% endblock content %}
