@@ -42,6 +42,7 @@
                                                       {{activity.name}} - <a href="{{result.1}}" target="_blank" class="text-decoration-none"> 
                                                         {{ result.0 }}
                                                     </a>
+                                                    {% endif %}
                                                     {% endwith %}
                                                     {% if activity.description %}<small class="text-muted d-block">{{ activity.description }}</small>{% endif %}
                                                 </li>
