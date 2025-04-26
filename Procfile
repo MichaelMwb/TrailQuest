@@ -1,1 +1,1 @@
-web: gunicorn MOVIESSTORE.wsgigit 
+web: gunicorn TRAILQUEST.wsgi
