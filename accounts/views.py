@@ -18,6 +18,9 @@ from django.urls import reverse
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt # Use csrf_protect in production with proper setup
+import os
+from django.conf import settings
+from django.utils.safestring import mark_safe
 
 @login_required
 def logout(request):
@@ -124,10 +127,6 @@ def reset_password(request):
 
     return render(request, "accounts/reset_password.html", {"form": form})
 
-import os
-from django.conf import settings
-from django.utils.safestring import mark_safe
-
 @login_required
 def trip_preferences_view(request):
     client = OpenAI(
@@ -216,12 +215,8 @@ def trip_preferences_view(request):
                 messages.error(request, "The request to the OpenAI API timed out. Please try again.")
                 return redirect('trip_preferences')
 
-            # Debugging: Log the response
-           # logger.debug("OpenAI API Response: %s", response)
-
             # Extract and clean the response content
             raw_content = response.choices[0].message.content
-           # logger.debug("Raw Response Content: %s", raw_content)
 
             # Improved cleaning logic
             if "```json" in raw_content:
@@ -231,11 +226,8 @@ def trip_preferences_view(request):
             else:
                 cleaned_content = raw_content.strip()
 
-           # logger.debug("Cleaned Content: %s", cleaned_content)
-
             # Validate the cleaned content
             if not cleaned_content.startswith("{") or not cleaned_content.endswith("}"):
-               # logger.error("Invalid JSON Format: %s", cleaned_content)
                 messages.error(request, "The OpenAI API returned an invalid itinerary format. Please try again.")
                 return redirect('trip_preferences')
 
@@ -270,7 +262,6 @@ def trip_preferences_view(request):
                 completed=False  # Mark as not completed
             )
 
-            #logger.debug("Trip saved successfully. Redirecting to trip suggestions...")  # Debugging log
             return redirect('trip_suggestions')
 
     else:
@@ -297,7 +288,18 @@ def past_trips(request):
             except json.JSONDecodeError:
                 trip.itinerary = None  # Handle invalid JSON gracefully
 
-    return render(request, 'accounts/past_trips.html', {'trips': trips})
+    # Fetch images from the static/background/ folder
+    background_folder = os.path.join(settings.STATICFILES_DIRS[0], 'background')
+    images = [
+        f"background/{file}" for file in os.listdir(background_folder)
+        if file.endswith(('.jpg', '.jpeg'))
+    ]
+
+    return render(request, 'accounts/past_trips.html', {
+        'trips': trips,
+        'images_json': mark_safe(json.dumps(images)),
+        'images': images # Although images_json is used by script, keep images for potential direct use
+    })
 
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
