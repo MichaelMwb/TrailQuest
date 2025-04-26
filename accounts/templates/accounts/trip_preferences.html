@@ -183,44 +183,47 @@
   
     document.addEventListener("DOMContentLoaded", function () {
       const imageGrid = document.getElementById("image-grid");
-  
+    
       function adjustGrid() {
-        const imageGrid = document.getElementById("image-grid");
         const footer = document.querySelector("footer");
         const headerHeight = 70;
-      
-        const gridTop = headerHeight; // we start the grid below the header
+    
+        const gridTop = headerHeight;
         const footerTop = footer.getBoundingClientRect().top + window.scrollY;
         const gridHeight = footerTop - gridTop;
-      
+    
         imageGrid.style.top = `${gridTop}px`;
         imageGrid.style.height = `${gridHeight}px`;
-      
+    
         const columnWidth = 150;
         const gridWidth = imageGrid.offsetWidth;
         const numColumns = Math.floor(gridWidth / columnWidth);
         const rowHeight = columnWidth;
         const numRows = Math.ceil(gridHeight / rowHeight);
         const totalImagesNeeded = numColumns * numRows;
-      
+    
         imageGrid.innerHTML = "";
-      
+    
         for (let i = 0; i < totalImagesNeeded; i++) {
           const container = document.createElement("div");
           container.className = "image-container";
-      
+    
           const img = document.createElement("img");
           img.src = `/static/${imageList[i % imageList.length]}`;
           img.alt = "Background Image";
-      
+    
           container.appendChild(img);
           imageGrid.appendChild(container);
         }
-      
+    
         imageGrid.classList.add("ready");
       }
+    
       adjustGrid();
       window.addEventListener("resize", adjustGrid);
+    
+      // ⏳ Also recalculate periodically to catch dynamic changes
+      setInterval(adjustGrid, 500); // Every 0.5 seconds
     });
   </script>
 {% endblock %}
