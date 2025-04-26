@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-
+from dotenv import load_dotenv
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -142,10 +142,13 @@ MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
+load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 #OPENAI_API_KEY = "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"
 
+
+# Access the OpenAI API key
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 LOGIN_REDIRECT_URL = '/'  # Redirect to the home page after login
 LOGOUT_REDIRECT_URL = '/accounts/login/'  # Redirect to the login page after logout
 
