@@ -25,6 +25,10 @@ from django.utils.safestring import mark_safe
 @login_required
 def logout(request):
     auth_logout(request)
+    # Clear all messages
+    storage = messages.get_messages(request)
+    for _ in storage:
+        pass  # This iterates through the messages and clears them
     return redirect('accounts.login')
 
 def login(request):
