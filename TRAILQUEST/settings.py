@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-39-(1x#392=6!5fu$nzt+so(e$^el!*yl-u_fb%l&$nqg#*^=i'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -144,7 +144,7 @@ MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-#OPENAI_API_KEY = "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"
+
 
 
 # Access the OpenAI API key
