@@ -72,6 +72,6 @@ class TripPreferencesForm(forms.Form):
     ]
     difficulty = forms.ChoiceField(choices=DIFFICULTY_CHOICES, label="Trail Difficulty", widget=forms.Select(attrs={'class': 'form-control'}))
 
-    group_size = forms.IntegerField(min_value=1, max_value=25, label="Group Size", widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'How many people?'}))
+    group_size = forms.IntegerField(min_value=1, max_value=10, label="Group Size", widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'How many people?'}))
 
     trip_name = forms.CharField(max_length=100, required=False, label="Trip Name (optional)", widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Name your trip'}))

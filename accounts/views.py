@@ -134,9 +134,6 @@ def reset_password(request):
 
     return render(request, "accounts/reset_password.html", {"form": form})
 
-    from django.conf import settings
-    from openai import OpenAI
-
 @login_required
 def trip_preferences_view(request):
     client = OpenAI(
@@ -219,7 +216,7 @@ def trip_preferences_view(request):
                         {"role": "system", "content": "You are an expert trail and camping trip planner."},
                         {"role": "user", "content": prompt}
                     ],
-                    timeout=30  # Increase timeout to 30 seconds
+                    timeout=29  # Increase timeout to 29 seconds
                 )
             except Timeout as e:
                 print("OpenAI API Timeout:", e)
