@@ -56,7 +56,7 @@ from .models import TripPreferences
 
 class TripPreferencesForm(forms.Form):
     location = forms.CharField(max_length=100, label="Location", widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter a location'}))
-    duration = forms.IntegerField(min_value=1, max_value=10, label="Trip Duration (days)", widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Number of days'}))
+    duration = forms.IntegerField(min_value=1, max_value=5, label="Trip Duration (days)", widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Number of days'}))
     
     ACTIVITIES_CHOICES = [
         ('hiking', 'Hiking'),
@@ -71,7 +71,7 @@ class TripPreferencesForm(forms.Form):
         ('hard', 'Hard'),
     ]
     difficulty = forms.ChoiceField(choices=DIFFICULTY_CHOICES, label="Trail Difficulty", widget=forms.Select(attrs={'class': 'form-control'}))
-    
-    group_size = forms.IntegerField(min_value=1, label="Group Size", widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'How many people?'}))
-    
+
+    group_size = forms.IntegerField(min_value=1, max_value=25, label="Group Size", widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'How many people?'}))
+
     trip_name = forms.CharField(max_length=100, required=False, label="Trip Name (optional)", widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Name your trip'}))

@@ -64,8 +64,8 @@
     </div>
   </div>
   <!-- Include Google Places API -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyANVv0AL0Z8nFUl2ZwM54k6ftxMUAC4CXg&libraries=places"></script>
   <script>
+  <script src="https://maps.googleapis.com/maps/api/js?key={{ google_places_key }}&libraries=places"></script>
     function initAutocomplete() {
       const locationInput = document.getElementById('id_location'); // Target the location field
       const locationError = document.getElementById('location-error'); // Error message element

@@ -1,26 +1,29 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login as auth_login, authenticate, logout as auth_logout
-from .forms import CustomUserCreationForm, CustomErrorList
-from django.shortcuts import redirect
+import os
+import json
+
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth import (
+    login as auth_login, authenticate, logout as auth_logout,
+    update_session_auth_hash
+)
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.contrib import messages
-from .forms import ForgotPasswordForm
-from .models import UserProfile
-from django.contrib.auth import update_session_auth_hash
-from .forms import PasswordResetForm
-from .forms import TripPreferencesForm
-from openai import OpenAI
-import json
-from TRAILQUEST.settings import OPENAI_API_KEY
-from django.http import HttpResponseRedirect
+from django.http import JsonResponse, HttpResponseRedirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from django.views.decorators.csrf import csrf_exempt # Use csrf_protect in production with proper setup
-import os
-from django.conf import settings
 from django.utils.safestring import mark_safe
+from django.views.decorators.csrf import csrf_exempt  # Use csrf_protect in production
+from django.views.decorators.http import require_POST
+
+from .forms import (
+    CustomUserCreationForm, CustomErrorList,
+    ForgotPasswordForm, PasswordResetForm, TripPreferencesForm
+)
+from .models import UserProfile
+
+from openai import OpenAI
+
 
 @login_required
 def logout(request):
@@ -131,11 +134,15 @@ def reset_password(request):
 
     return render(request, "accounts/reset_password.html", {"form": form})
 
+    from django.conf import settings
+    from openai import OpenAI
+
 @login_required
 def trip_preferences_view(request):
     client = OpenAI(
-        api_key=OPENAI_API_KEY
+        api_key=settings.OPENAI_API_KEY
     )
+
 
     # Fetch images from the static/background/ folder
     background_folder = os.path.join(settings.STATICFILES_DIRS[0], 'background')
@@ -212,7 +219,7 @@ def trip_preferences_view(request):
                         {"role": "system", "content": "You are an expert trail and camping trip planner."},
                         {"role": "user", "content": prompt}
                     ],
-                    timeout=60  # Increase timeout to 60 seconds
+                    timeout=30  # Increase timeout to 30 seconds
                 )
             except Timeout as e:
                 print("OpenAI API Timeout:", e)
@@ -273,7 +280,7 @@ def trip_preferences_view(request):
 
     # Pass the images and form to the template
     return render(request, 'accounts/trip_preferences.html', {'form': form, 
-                                                              'images_json': mark_safe(json.dumps(images)),  'images': images})
+                                                              'images_json': mark_safe(json.dumps(images)),  'images': images, 'google_places_key': settings.GOOGLE_PLACES_API_KEY})
 
 from django.shortcuts import render
 from .models import Trip

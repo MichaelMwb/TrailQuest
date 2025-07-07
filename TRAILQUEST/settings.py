@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 from dotenv import load_dotenv
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -79,7 +80,6 @@ WSGI_APPLICATION = 'TRAILQUEST.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 import dj_database_url
-import os
 
 if os.getenv("DATABASE_URL"):  # Use PostgreSQL on Heroku
     DATABASES = {
@@ -128,7 +128,6 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-import os
 
 # Static files settings
 STATIC_URL = '/static/'
@@ -143,12 +142,9 @@ MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 load_dotenv()
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+GOOGLE_PLACES_API_KEY = os.environ.get("GOOGLE_PLACES_API_KEY")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
-
-
-# Access the OpenAI API key
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 LOGIN_REDIRECT_URL = '/'  # Redirect to the home page after login
 LOGOUT_REDIRECT_URL = '/accounts/login/'  # Redirect to the login page after logout
 
