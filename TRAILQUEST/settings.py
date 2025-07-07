@@ -81,17 +81,19 @@ WSGI_APPLICATION = 'TRAILQUEST.wsgi.application'
 
 import dj_database_url
 
-if os.getenv("DATABASE_URL"):  # Use PostgreSQL on Heroku
-    DATABASES = {
-        'default': dj_database_url.config(conn_max_age=600, ssl_require=True)
+# Default to SQLite for local development
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
-else:  # Use SQLite for local development
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+}
+
+# If Heroku sets DATABASE_URL, use Postgres instead
+db_from_env = dj_database_url.config(conn_max_age=600, ssl_require=True)
+if db_from_env:
+    DATABASES['default'] = db_from_env
+
 
 
 # Password validation
