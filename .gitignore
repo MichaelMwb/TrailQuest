@@ -46,3 +46,11 @@ runtime.txt
 
 # Ignore compiled static files (if using collectstatic)
 staticfiles/
+
+# Unused/old project folders
+cart/
+movies/
+media/movie_images/
+
+# Additional Django files
+*.sqlite3-journal
