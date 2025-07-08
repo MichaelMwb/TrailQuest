@@ -252,10 +252,6 @@ def trip_preferences_view(request):
                     # Add a Google Maps link to the location
                     itinerary_data['days'][day]['activities'][i]['location'] = itinerary_data['days'][day]['activities'][i]['location'] + "|https://www.google.com/maps/search/?api=1&query=" + itinerary_data['days'][day]['activities'][i]['location'].lower().replace(" ", "+")
 
-                for i in range(len(itinerary_data['days'][day]['suggestions'])):
-                    # Add a Google Maps link to the location
-                    itinerary_data['days'][day]['suggestions'][i]['location'] = itinerary_data['days'][day]['suggestions'][i]['location'] + "|https://www.google.com/maps/search/?api=1&query=" + itinerary_data['days'][day]['suggestions'][i]['location'].lower().replace(" ", "+")
-
             print("About to save the trip...")
             # Save the trip
             Trip.objects.create(

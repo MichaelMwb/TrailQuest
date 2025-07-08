@@ -64,56 +64,56 @@
     </div>
   </div>
   <!-- Include Google Places API -->
-  <script>
+   <!-- Debug: Print the key -->
+
   <script src="https://maps.googleapis.com/maps/api/js?key={{ google_places_key }}&libraries=places"></script>
-    function initAutocomplete() {
-      const locationInput = document.getElementById('id_location'); // Target the location field
-      const locationError = document.getElementById('location-error'); // Error message element
-      let isValidLocation = false; // Flag to track if a valid city is selected
-
-      // Initialize Google Places Autocomplete
-      const autocomplete = new google.maps.places.Autocomplete(locationInput, {
-        types: ['(cities)'], // Restrict to cities only
-      });
-
-      // Handle place selection
-      autocomplete.addListener('place_changed', () => {
-        const place = autocomplete.getPlace();
-        if (place && place.formatted_address) {
-          isValidLocation = true; // Mark as valid if a city is selected
-          locationError.style.display = 'none'; // Hide error message
-        }
-      });
-
-      // Clear the flag if the user types manually
-      locationInput.addEventListener('input', () => {
-        isValidLocation = false; // Reset the flag if the user types
-      });
-
-      // Validate the form on submission
-      const form = document.getElementById('trip-form');
-      form.addEventListener('submit', (e) => {
-        if (!isValidLocation) {
-          e.preventDefault(); // Prevent form submission
-          locationError.style.display = 'block'; // Show error message
-          locationInput.focus(); // Focus the location field
-        }
-      });
-    }
-
-    // Initialize autocomplete when the page loads
-    document.addEventListener('DOMContentLoaded', initAutocomplete);
-
-    // Show spinner on form submission
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const locationInput = document.getElementById('id_location');
+    const locationError = document.getElementById('location-error');
     const form = document.getElementById('trip-form');
     const submitButton = document.getElementById('submit-button');
     const loadingIndicator = document.getElementById('loading-indicator');
 
-    form.addEventListener('submit', function() {
-      submitButton.disabled = true; // Disable the submit button
-      loadingIndicator.style.display = 'block'; // Show the spinner
-    });
-  </script>
+    let isValidLocation = false;
+
+    try {
+      // Attach Google Places Autocomplete
+      const autocomplete = new google.maps.places.Autocomplete(locationInput, {
+        types: ['(cities)'],
+      });
+
+      // On valid city selection
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (place && place.formatted_address) {
+          isValidLocation = true;
+          locationError.style.display = 'none';
+        }
+      });
+
+      // Reset on manual typing
+      locationInput.addEventListener('input', () => {
+        isValidLocation = false;
+      });
+
+      // Handle form submit
+      form.addEventListener('submit', function (e) {
+        if (!isValidLocation) {
+          e.preventDefault();
+          locationError.style.display = 'block';
+          locationInput.focus();
+        } else {
+          submitButton.disabled = true;
+          loadingIndicator.style.display = 'block';
+        }
+      });
+    } catch (err) {
+      console.error("Autocomplete failed to initialize:", err);
+    }
+  });
+</script>
+
   <style>
     /* Background Grid Styles */
   .image-grid {
