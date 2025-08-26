@@ -1,52 +1,59 @@
-# TrailQuest
+# TrailQuest – AI-Powered Adventure Planner  
 
-TrailQuest is a web app for planning outdoor adventures with ease. Whether you're hiking, camping, or exploring new trails, TrailQuest helps you generate and manage detailed itineraries tailored to your preferences.
-
----
-
-**🎯 Motivation**  
-Planning outdoor trips can be time-consuming and fragmented across multiple platforms. TrailQuest simplifies this process by combining itinerary generation, editing, and storage into a single, user-friendly platform—so adventurers can spend more time exploring and less time planning.
+TrailQuest is a full-stack web application for **planning outdoor adventures with ease**. Whether you’re hiking, camping, or exploring new trails, TrailQuest helps you **generate, edit, and manage detailed itineraries** tailored to your preferences.  
 
 ---
 
-**🚀 Features**
-
-**Smart Itinerary Generator**  
-Input location, duration, activity type, trail difficulty, and group size to generate custom plans using intelligent algorithms.
-
-**Google Places Autocomplete**  
-Seamless location selection with real-time, city-filtered suggestions via Google Places API.
-
-**Itinerary Management Tools**  
-- Edit plans dynamically (dates, activities, notes)  
-- Print clean, formatted itineraries  
-- Save and revisit past plans in your profile  
-
-**Responsive Design**  
-Mobile-first layout with a dynamic image grid for an immersive experience across devices.
-
-**Secure User Accounts**  
-Personalized itinerary storage with secure authentication.
+## 🎯 Motivation  
+Planning outdoor trips is often fragmented across multiple tools. TrailQuest streamlines the process by combining **smart itinerary generation, Google-powered location search, and profile-based storage** into one platform—so adventurers can spend more time exploring and less time planning.  
 
 ---
 
-**🛠 Tech Stack**  
+## 🚀 Features  
 
-**Backend**:  
+- **✨ Smart Itinerary Generator**  
+  Input location, activity type, duration, difficulty, and group size to generate custom trip plans using the **OpenAI API**.  
+  Each activity includes **Google Maps links** for easy navigation.  
+
+- **📍 Google Places Autocomplete**  
+  Real-time, city-filtered location suggestions powered by the **Google Places API**.  
+
+- **📝 Itinerary Management**  
+  - Dynamically edit or remove activities (AJAX JSON endpoints)  
+  - Add notes to activities  
+  - Save trips and revisit past itineraries in your profile  
+  - Print clean, formatted itineraries  
+
+- **📱 Responsive Design**  
+  Mobile-first layout with **Bootstrap** styling and a dynamic image grid.  
+
+- **🔒 Secure User Accounts**  
+  - Authentication with personalized itinerary storage  
+  - Birthdate-verified password reset flow  
+
+---
+
+## 🛠 Tech Stack  
+
+**Backend**  
 - Python 3  
-- Django  
+- Django (with REST-style JSON endpoints for trip edits)  
 
-**Frontend**:  
-- HTML5  
-- CSS3  
-- Bootstrap  
-- JavaScript  
+**Frontend**  
+- Django HTML templates  
+- CSS3 + Bootstrap  
+- JavaScript (AJAX for dynamic updates)  
 
-**APIs**:  
-- Google Places API
-- ChatGPT API  
+**APIs & Integrations**  
+- Google Places API (location autocomplete)  
+- OpenAI API (gpt-4o-mini) for itinerary generation  
 
-**Database**:  
-- SQLite (for development)  
-- PostgreSQL/MySQL (for production)
+**Database**  
+- SQLite (development)  
+- PostgreSQL (production via Heroku)  
 
+**Deployment**  
+- Hosted on **Heroku**  
+- Static files served with **Whitenoise**  
+
+---
