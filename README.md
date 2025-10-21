@@ -5,7 +5,7 @@ TrailQuest is a full-stack web application for **planning outdoor adventures wit
 ---
 
 ## 🎯 Motivation  
-Planning outdoor trips is often fragmented across multiple tools. TrailQuest streamlines the process by combining **smart itinerary generation, Google-powered location search, and profile-based storage** into one platform—so adventurers can spend more time exploring and less time planning.  
+Planning outdoor trips is often fragmented across multiple tools. TrailQuest streamlines the process by combining **smart itinerary generation, Google-powered location search, and profile-based storage** into one platform, so adventurers can spend more time exploring and less time planning.  
 
 ---
 
